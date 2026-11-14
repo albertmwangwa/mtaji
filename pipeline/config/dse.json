@@ -1,0 +1,161 @@
+{
+  "_about": "Listed companies to collect. sec: BI banks & finance, IA industrial & allied, CS commercial services. x = cross-listed. splits: [date, ratio] — prices and dividends before the date are divided by ratio. dividend_override: use this per-share amount as the 'regular' annual dividend instead of the trailing-12-month sum (e.g. to leave out a one-off special). dividends_extra: dividends missing from the DSE dividends page (from company or DSE notices); same fields as scraped records, 'payment' may be null if only the year is known (then give 'announced' as the year).",
+  "tickers": {
+    "AFRIPRISE": {
+      "name": "Afriprise Investment",
+      "sec": "BI"
+    },
+    "CRDB": {
+      "name": "CRDB Bank",
+      "sec": "BI"
+    },
+    "DCB": {
+      "name": "DCB Commercial Bank",
+      "sec": "BI"
+    },
+    "DSE": {
+      "name": "Dar es Salaam Stock Exchange",
+      "sec": "BI",
+      "dividend_override": {
+        "dps": 69,
+        "note": "Ordinary dividend TZS 69.00 for 2025. In 2026 DSE also paid a one-off special dividend of TZS 77.21, left out of the regular figure."
+      },
+      "dividends_extra": [
+        {
+          "dps": 69,
+          "payment": null,
+          "announced": "2026",
+          "books": null,
+          "doc": null,
+          "src": "DSE notice: ordinary dividend for 2025"
+        },
+        {
+          "dps": 77.21,
+          "payment": null,
+          "announced": "2026",
+          "books": null,
+          "doc": null,
+          "src": "DSE notice: one-off special dividend, 2026"
+        }
+      ]
+    },
+    "EABL": {
+      "name": "East African Breweries",
+      "sec": "IA",
+      "x": true
+    },
+    "JATU": {
+      "name": "Jatu",
+      "sec": "IA"
+    },
+    "JHL": {
+      "name": "Jubilee Holdings",
+      "sec": "BI",
+      "x": true
+    },
+    "KA": {
+      "name": "Kenya Airways",
+      "sec": "CS",
+      "x": true
+    },
+    "KCB": {
+      "name": "KCB Group",
+      "sec": "BI",
+      "x": true
+    },
+    "MBP": {
+      "name": "Maendeleo Bank",
+      "sec": "BI"
+    },
+    "MCB": {
+      "name": "Mwalimu Commercial Bank",
+      "sec": "BI"
+    },
+    "MKCB": {
+      "name": "Mkombozi Commercial Bank",
+      "sec": "BI"
+    },
+    "MUCOBA": {
+      "name": "Mucoba Bank",
+      "sec": "BI"
+    },
+    "NICO": {
+      "name": "NICOL",
+      "sec": "BI"
+    },
+    "NMB": {
+      "name": "NMB Bank",
+      "sec": "BI",
+      "splits": [
+        [
+          "2026-08-24",
+          10
+        ]
+      ],
+      "dividends_extra": [
+        {
+          "dps": 663,
+          "payment": "2026-06-25",
+          "announced": null,
+          "books": null,
+          "doc": null,
+          "src": "NMB notice: TZS 663 for FY2025, paid 25 Jun 2026 (before the 1-for-10 split)"
+        }
+      ]
+    },
+    "NMG": {
+      "name": "Nation Media Group",
+      "sec": "CS",
+      "x": true
+    },
+    "PAL": {
+      "name": "Precision Air",
+      "sec": "CS"
+    },
+    "SWALA": {
+      "name": "Swala Oil & Gas",
+      "sec": "CS"
+    },
+    "SWIS": {
+      "name": "Swissport Tanzania",
+      "sec": "CS"
+    },
+    "TBL": {
+      "name": "Tanzania Breweries",
+      "sec": "IA"
+    },
+    "TCC": {
+      "name": "Tanzania Cigarette",
+      "sec": "IA"
+    },
+    "TCCL": {
+      "name": "Tanga Cement",
+      "sec": "IA"
+    },
+    "TOL": {
+      "name": "TOL Gases",
+      "sec": "IA"
+    },
+    "TPCC": {
+      "name": "Twiga Cement",
+      "sec": "IA"
+    },
+    "TTP": {
+      "name": "Tanzania Tea Packers",
+      "sec": "IA"
+    },
+    "USL": {
+      "name": "Uchumi Supermarket",
+      "sec": "CS",
+      "x": true
+    },
+    "VODA": {
+      "name": "Vodacom Tanzania",
+      "sec": "CS"
+    },
+    "YETU": {
+      "name": "Yetu Microfinance",
+      "sec": "BI"
+    }
+  }
+}

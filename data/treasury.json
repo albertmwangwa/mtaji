@@ -1,0 +1,20 @@
+{
+  "_about": "Edited by hand after each Bank of Tanzania auction (bot.go.tz > Auction results). y = weighted average yield %, c = coupon %. Set src to null for an estimate.",
+  "asof": "2026-11-04",
+  "bills": {
+    "35":  {"y": 3.5379, "src": "BoT auction 21 Oct 2026 (no. 1209)"},
+    "91":  {"y": 3.6357, "src": "BoT auction 21 Oct 2026 (no. 1209)"},
+    "182": {"y": 5.5712, "src": "BoT auction 21 Oct 2026 (no. 1209)"},
+    "364": {"y": 6.1342, "src": "BoT auction 21 Oct 2026 (no. 1209)"}
+  },
+  "bonds": {
+    "2":  {"c": 9.50,  "y": 8.0919,  "src": "BoT auction 4 Nov 2026 (bond no. 712)"},
+    "5":  {"c": 10.25, "y": 9.5275,  "src": "BoT auction 16 Sep 2026 (bond no. 700)"},
+    "7":  {"c": 10.75, "y": 10.00,   "src": null},
+    "10": {"c": 11.25, "y": 10.6924, "src": "BoT auction 2 Sep 2026 (bond no. 711)"},
+    "15": {"c": 12.25, "y": 10.7907, "src": "BoT auction 30 Sep 2026 (bond no. 696)"},
+    "20": {"c": 12.25, "y": 10.5214, "src": "BoT auction 28 Oct 2026 (bond no. 710)"},
+    "25": {"c": 12.75, "y": 10.84,   "src": "BoT auction 15 Oct 2026 (bond no. 722)"}
+  },
+  "tax": {"bill_wht": 10, "bond_wht_under3y": 10, "bond_wht_3y_plus": 0, "dividend_wht": 5}
+}

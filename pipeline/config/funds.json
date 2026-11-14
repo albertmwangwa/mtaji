@@ -1,0 +1,35 @@
+{
+  "_about": "Hand-maintained fund facts the price sources do not publish. Keys are NAVView fund ids. cat: mm money market, fi fixed income, bal balanced, eq equity/ETF. fee = annual management fee %, min = minimum first investment (fund currency), liq = time to get your money. dpu = regular payout per unit per month (added to returns). yld = priced at 1.00, return is the published yield. proxy = no own NAV; uses another fund's yield. inc = launch price for since-launch return.",
+  "funds": {
+    "utt.umoja":   {"name": "Umoja Fund", "cat": "bal", "fee": 1.80, "min": null, "liq": "T+10", "desc": "UTT AMIS's flagship balanced fund: listed shares, bonds and money market. Medium risk."},
+    "utt.wekeza":  {"name": "Wekeza Maisha Fund", "cat": "bal", "fee": 1.50, "min": 8340, "liq": null, "desc": "Long-term saving with life insurance cover."},
+    "utt.watoto":  {"name": "Watoto Fund", "cat": "bal", "fee": 1.50, "min": 10000, "liq": "T+10", "desc": "Saving for a child's education and future."},
+    "utt.jikimu":  {"name": "Jikimu Fund", "cat": "bal", "fee": 1.80, "min": 5000, "liq": "T+10", "dist": true, "desc": "Income fund that can pay regular distributions. Returns shown are NAV only."},
+    "utt.liquid":  {"name": "Liquid Fund", "cat": "mm", "fee": 1.80, "min": 100000, "liq": "T+3", "desc": "Tanzania's largest money market fund. Low risk, easy access to cash."},
+    "utt.bond":    {"name": "Bond Fund", "cat": "fi", "fee": 1.80, "min": 50000, "liq": "T+10", "dist": true, "dpu": 1.00, "desc": "Government bonds and bank deposits. Pays about TZS 1.00 a unit each month (or reinvests it); returns shown include these payouts."},
+
+    "whi.faida":   {"mgr": "Watumishi Housing Investments", "cat": "mm", "fee": 1.80, "min": 10000, "liq": "T+3", "desc": "Money market fund. Low risk."},
+    "itrust.iCash":   {"mgr": "iTrust Finance", "cat": "mm", "fee": 1.60, "min": 100000, "liq": "T+3", "desc": "Money market fund. Low risk."},
+    "itrust.iSave":   {"mgr": "iTrust Finance", "cat": "fi", "fee": 1.60, "min": 100000, "liq": "T+3", "desc": "Fixed income fund."},
+    "itrust.iIncome": {"mgr": "iTrust Finance", "cat": "fi", "fee": 1.60, "min": 10000000, "liq": "T+3", "desc": "Fixed income fund with a TZS 10M minimum."},
+    "itrust.Imaan":   {"mgr": "iTrust Finance", "cat": "bal", "fee": 1.60, "min": 100000, "liq": "T+3", "desc": "Shariah-compliant balanced fund."},
+    "itrust.iGrowth": {"mgr": "iTrust Finance", "cat": "bal", "fee": 1.60, "min": 100000, "liq": "T+3", "desc": "Balanced growth fund with a large share allocation. High risk: the last 12 months were exceptional."},
+    "itrust.iDollar": {"mgr": "iTrust Finance", "cat": "mm", "fee": 1.00, "min": 1000, "liq": "T+5", "desc": "US dollar money market fund."},
+    "itrust.iEACLC":  {"name": "iTrust EAC Large Cap ETF", "mgr": "iTrust Finance", "cat": "eq", "fee": 0.80, "min": 100000, "liq": "DSE", "listed": true, "inc": {"from": "2025-12-19", "p0": 1000}, "desc": "ETF of large East African listed shares, traded on the DSE. Issued at TZS 1,000 (IPO closed 19 Dec 2025)."},
+    "sanlam.mwekeza": {"name": "M-Wekeza (Vodacom M-Pesa)", "mgr": "Sanlam Investments East Africa", "cat": "mm", "proxy": "sanlam.pesammf", "fee": null, "min": 10000, "liq": "Instant", "desc": "Invest from TZS 10,000 inside M-Pesa, managed by Sanlam. No separate NAV is published, so the SanlamAllianz Pesa money market yield stands in for it."},
+    "sanlam.pesammf": {"name": "SanlamAllianz Pesa Money Market", "mgr": "Sanlam Investments East Africa", "cat": "mm", "yld": true, "fee": 2.00, "min": 10000, "liq": "T+3", "desc": "Money market fund priced at TZS 1.00 a unit; returns accrue daily as yield."},
+    "sanlam.usdFixedIncome": {"name": "SanlamAllianz USD Fixed Income", "mgr": "Sanlam Investments East Africa", "cat": "fi", "yld": true, "fee": 1.50, "min": 1000, "liq": "T+3", "desc": "US dollar fixed income fund, priced at 1.00 with a published yield."},
+    "orbit.inuka":      {"mgr": "Orbit Securities", "cat": "mm", "fee": 2.00, "min": 10000, "liq": "T+3", "desc": "Money market fund. Low risk."},
+    "orbit.inukaDozen": {"mgr": "Orbit Securities", "cat": "eq", "fee": 2.00, "min": 10000, "liq": "T+3", "desc": "Equity index fund tracking 12 DSE shares. High risk."},
+    "tsl.imara":       {"mgr": "Tanzania Securities", "cat": "mm", "fee": 1.50, "min": 50000, "liq": "T+2", "desc": "Money market fund. Low risk."},
+    "tsl.keshotulivu": {"mgr": "Tanzania Securities", "cat": "bal", "fee": null, "min": 1000000, "liq": null, "desc": "Balanced fund with a TZS 1M minimum."},
+    "vertex.bond": {"mgr": "Vertex International Securities", "cat": "fi", "fee": 1.20, "min": 500, "liq": null, "desc": "Government bond fund."},
+    "vertex.etf":  {"mgr": "Vertex International Securities", "cat": "eq", "fee": 1.20, "min": 20000, "liq": "DSE", "listed": true, "desc": "Exchange-traded fund of DSE shares."},
+    "zansec.timiza":      {"mgr": "Zan Securities", "cat": "bal", "fee": null, "min": null, "liq": null, "desc": "Balanced fund."},
+    "zansec.timiza-plus": {"mgr": "Zan Securities", "cat": "bal", "fee": 1.30, "min": 1000000, "liq": "T+3–10", "desc": "Balanced income fund."},
+    "zansec.timiza-etf":  {"mgr": "Zan Securities", "cat": "eq", "fee": 1.30, "min": 20000, "liq": "DSE", "listed": true, "desc": "Fund of exchange-traded funds, listed on the DSE."},
+    "apef.ziada":         {"mgr": "Africa Pension Fund", "cat": "mm", "fee": 1.60, "min": 50000, "liq": "T+3", "desc": "Money market fund. Low risk."},
+    "apef.ziadaInsured":  {"mgr": "Africa Pension Fund", "cat": "mm", "fee": 1.60, "min": 50000, "liq": "T+3", "desc": "Money market fund with insurance cover."},
+    "alpha.halal": {"mgr": "Global Alpha Capital", "cat": "bal", "fee": null, "min": null, "liq": "T+5", "desc": "Shariah-compliant multi-asset fund. No NAV published yet."}
+  }
+}

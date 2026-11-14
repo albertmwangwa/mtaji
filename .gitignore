@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+*.tmp
+_test.html
+_site/
+.DS_Store

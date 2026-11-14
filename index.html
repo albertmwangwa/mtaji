@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mtaji · Tanzania investment planner</title>
+<meta name="description" content="Compare Tanzanian unit trusts, DSE shares and government securities with live data, and plan how your money grows.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%2318181B'/><path d='M8 22 14 14l4 4 6-8' stroke='white' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/app.css">
+<script>try{const t=localStorage.getItem('mtaji:theme');if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js" defer></script>
+<script type="module" src="assets/js/main.js"></script>
+</head>
+<body>
+<div class="shell">
+  <aside class="side">
+    <div class="brand"><i>M</i>Mtaji</div>
+    <nav class="nav" id="nav"></nav>
+    <div class="side-foot">
+      <div id="freshness"></div>
+      <button class="theme-btn" id="theme" type="button">Theme: auto</button>
+    </div>
+  </aside>
+  <main id="app"><div class="loading">Loading market data…</div></main>
+</div>
+<nav class="tabbar" id="tabbar"></nav>
+</body>
+</html>
