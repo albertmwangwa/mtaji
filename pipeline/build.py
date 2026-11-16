@@ -178,6 +178,7 @@ def _adjust(rows, divs, splits):
             if r[0] < day:
                 for i in (1, 2, 3, 4):
                     r[i] = r[i] / ratio
+                r[5] = r[5] * ratio   # volume in today's shares; turnover (TZS) is unchanged
         for x in divs:
             if (x.get("books") or x.get("payment") or "9999") < day:
                 x["dps"] = round(x["dps"] / ratio, 4)
@@ -209,8 +210,11 @@ def _drop_spikes(rows, jump=0.55, window=3):
     return keep, dropped
 
 
-def build_dse(cfg: dict, raw: dict, prev: dict | None):
-    tickers, out, warnings = cfg["tickers"], {}, []
+def build_dse(cfg: dict, raw: dict, prev: dict | None, watch: dict | None = None, fetched_at: str | None = None):
+    """watch: DSE market watch quotes by symbol (15-minute-delayed view of the current session, market caps)."""
+    from . import model
+    tickers, out, warnings, series = cfg["tickers"], {}, [], {}
+    watch = watch or {}
     prev_t = (prev or {}).get("tickers", {})
     # the DSE lists today's session before anything trades (all zero turnover); use the last session with trades
     turn_by_day = {}
@@ -238,6 +242,7 @@ def build_dse(cfg: dict, raw: dict, prev: dict | None):
         rows, dropped = _drop_spikes(rows)
         for r in dropped:
             warnings.append(f"DSE {t}: ignored a bad print of {r[4]:g} on {r[0]} (it reversed within a few sessions)")
+        series[t] = rows
         dates, closes = [r[0] for r in rows], [r[4] for r in rows]
         last = rows[-1]
         day = d(last[0])
@@ -287,19 +292,49 @@ def build_dse(cfg: dict, raw: dict, prev: dict | None):
                           "y5a": pct((last[4] / y5) ** (1 / 5) - 1) if y5 and d(dates[0]) <= _shift(day, years=-5) else None},
                   "liq": {"sessions": len(year), "traded": len(traded),
                           "avgTurn": round(sum(r[6] for r in year) / max(1, len(year)))},
-                  "hi52": max(r[2] for r in year) if year else None, "lo52": min(r[3] for r in year if r[3] > 0) if year else None,
+                  # 52-week range from closes (what the charts show; DSE intraday highs and lows are not always consistent)
+                  "hi52": max(r[4] for r in year) if year else None, "lo52": min(r[4] for r in year) if year else None,
                   "monthly": {"m0": start.isoformat()[:7], "c": months},
                   "daily": [[r[0], round(r[4], 2), int(r[5])] for r in rows[-400:]],
                   "div": dv}
         if meta.get("splits"):
             out[t]["splits"] = meta["splits"]
+        if not traded:   # cross-listed or suspended: no DSE trades in a year, so the price is only a reference
+            out[t]["ref"] = True
+        q = watch.get(t)
+        if q:
+            if q.get("mcap"):
+                out[t]["mcap"] = round(q["mcap"])
+                out[t]["cap"] = model.cap_for(q["mcap"], q.get("last") or last[4])
+            # today's session so far, when it is not yet in the trading history
+            if (q.get("volume") or 0) > 0 and (q.get("volume") != last[5] or q.get("high") != last[2]):
+                out[t]["today"] = {"vol": q["volume"], "high": q.get("high"), "low": q.get("low"), "prev": q.get("prevClose"), "at": fetched_at}
+            if out[t].get("ref") and q.get("last"):
+                out[t]["refq"] = {"last": q["last"], "prev": q.get("prevClose"), "pct": q.get("pct"), "at": fetched_at}
         for a, b in zip(rows[-500:], rows[-499:]):
             if b[4] / a[4] > 1.6 or b[4] / a[4] < 0.55:
                 warnings.append(f"DSE {t}: close moved from {a[4]:g} to {b[4]:g} on {b[0]}; a split or data error? Add it to config/dse.json if it is a split.")
+    # price model, rebuilt from the full history on every run (see pipeline/model.py)
+    mmeta = None
+    try:
+        models, mmeta = model.fit({t: r for t, r in series.items() if not out.get(t, {}).get("ref")}, {t: v.get("cap", 0.15) for t, v in out.items()})
+        for t, m in models.items():
+            out[t]["model"] = m
+    except Exception as e:   # the model must never stop the data from publishing
+        warnings.append(f"DSE model failed: {e}")
+        for t in out:
+            if prev_t.get(t, {}).get("model"):
+                out[t]["model"] = prev_t[t]["model"]
+        mmeta = (prev or {}).get("model")
     total_turn = sum(v["turn"] for v in out.values() if v.get("date") == asof)
     up = sum(1 for v in out.values() if (v["chg"].get("d1") or 0) > 0 and v.get("date") == asof)
     down = sum(1 for v in out.values() if (v["chg"].get("d1") or 0) < 0 and v.get("date") == asof)
-    return {"asof": asof, "market": {"turnover": round(total_turn), "up": up, "down": down, "count": len(out)}, "tickers": out}, warnings
+    res = {"asof": asof, "market": {"turnover": round(total_turn), "up": up, "down": down, "count": len(out)}, "tickers": out}
+    if mmeta:
+        res["model"] = mmeta
+    if watch:
+        res["watch_at"] = fetched_at
+    return res, warnings
 
 
 # ---------------------------------------------------------------- treasury (BoT auctions)

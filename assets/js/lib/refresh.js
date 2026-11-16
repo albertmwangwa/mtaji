@@ -104,12 +104,6 @@ async function loadLatest(){
 }
 
 export const running = () => !!job && !job.done;
-/** Sidebar status line while a refresh is running, else null. */
-export function statusHtml(){
-  if (!running()) return null;
-  const s = STEPS.find(x => x[0] === job.step);
-  return `<div class="status run"><i></i>Refreshing: ${esc(s[1].split(' ')[0].toLowerCase())}…</div>`;
-}
 
 export function initRefresh(opts){
   onData = opts.onData || onData;

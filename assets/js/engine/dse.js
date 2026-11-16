@@ -36,10 +36,14 @@ export function histStats(s){
   const valid = px.filter(v => v > 0);
   return {trend:(Math.exp(slope) - 1)*100, c5:cg(5), c3:cg(3), c1:cg(1), vol, r2, hi:Math.max(...valid), lo:Math.min(...valid), months:px.length};
 }
-export const FORECAST = {ease:'5-year trend, easing to 10% a year by year 5', trend:'5-year trend (fitted to 60 monthly closes)', c5:'5-year average growth', c3:'3-year average growth', c1:'Last 12 months', custom:'My own rate'};
+export const FORECAST = {model:'Mtaji model (rebuilt from DSE data at every refresh)', ease:'5-year trend, easing to 10% a year by year 5', trend:'5-year trend (fitted to 60 monthly closes)', c5:'5-year average growth', c3:'3-year average growth', c1:'Last 12 months', custom:'My own rate'};
 /** Yearly price growth path for a share: own rate g (percent), or a basis from its history. */
 export function growthPath(s, basis, years, g){
   if (basis === 'custom' || (g != null && g !== '' && Number.isFinite(+g))){ const r = +g || 0; return {path:ratePath(r, r, 2, years, true), g0:r, label:'your rate'}; }
+  if (basis === 'model'){
+    if (s.model && Number.isFinite(s.model.g)){ const r = s.model.g*100; return {path:ratePath(r, r, 2, years, true), g0:r, label:'Mtaji model'}; }
+    basis = 'ease';
+  }
   const h = histStats(s), g0 = h ? (basis === 'ease' ? h.trend : h[basis]) : NaN;
   if (!Number.isFinite(g0)) return {path:ratePath(0, 0, 2, years, true), g0:0, label:'no history, 0%'};
   return basis === 'ease' ? {path:ratePath(g0, 10, 5, years, false), g0, label:'trend easing to 10%'} : {path:ratePath(g0, g0, 2, years, true), g0, label:{trend:'5-yr trend', c5:'5-yr average', c3:'3-yr average', c1:'last 12 months'}[basis]};
@@ -97,4 +101,21 @@ export function mixVol(series, w){
     v += w[i]*w[j]*c/(L - 1);
   }
   return Math.sqrt(Math.max(0, v)*12);
+}
+
+/* ---------- Mtaji model (pipeline/model.py): ranges for each horizon, rebuilt at every refresh ---------- */
+export const HORIZON = [['1d', 'Next session'], ['1w', '1 week'], ['1m', '1 month'], ['3m', '3 months'], ['1y', '1 year'], ['2y', '2 years'], ['3y', '3 years'], ['5y', '5 years']];
+export const HORIZON_YEARS = {'1d':1/252, '1w':5/252, '1m':21/252, '3m':63/252, '1y':1, '2y':2, '3y':3, '5y':5};
+/** Standard normal CDF (Abramowitz-Stegun 7.1.26). */
+export function ncdf(x){
+  const t = 1/(1 + 0.3275911*Math.abs(x)/Math.SQRT2), y = 1 - (((((1.061405429*t - 1.453152027)*t) + 1.421413741)*t - 0.284496736)*t + 0.254829592)*t*Math.exp(-x*x/2);
+  return x >= 0 ? (1 + y)/2 : (1 - y)/2;
+}
+/** Chance that holding the share for `years` (price + dividends after 5% tax) beats a T-bill rolled at yield rf (after tax),
+ *  from the model's central growth and its own 1-year range. */
+export function beatChance(s, years, rf){
+  const m = s.model; if (!m?.h?.['1y']) return NaN;
+  const [lo, mid, hi] = m.h['1y'], sd = Math.log(hi/lo)/(2*1.2816), dy = (dividendOf(s).dps || 0)/s.close*(1 - WHT);
+  const mu = Math.log(1 + m.g) + Math.log(1 + dy) - Math.log(1 + rf);
+  return ncdf(mu*years/(sd*Math.sqrt(years)));
 }

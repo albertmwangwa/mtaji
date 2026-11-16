@@ -3,7 +3,7 @@ import {loadCore, db, fundsPriced} from './data.js';
 import {dstr, esc} from './lib/fmt.js';
 import {$, ago} from './lib/ui.js';
 import {whenChartReady} from './lib/charts.js';
-import {initRefresh, openRefresh, statusHtml, running} from './lib/refresh.js';
+import {initRefresh, openRefresh, running} from './lib/refresh.js';
 
 const ICON = {
   home:'<path d="M3 11 12 4l9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
@@ -15,6 +15,10 @@ const ICON = {
   gov:'<path d="M3 10h18M5 10v8m4-8v8m6-8v8m4-8v8M3 21h18M12 3l9 5H3z"/>',
   goal:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>',
   refresh:'<path d="M21 12a9 9 0 1 1-2.64-6.36M21 4v5h-5"/>',
+  sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+  moon:'<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>',
+  auto:'<circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor"/>',
+  ext:'<path d="M14 4h6v6m0-6-9 9M19 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5"/>',
   search:'<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>'
 };
 const svg = k => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${ICON[k]}</svg>`;
@@ -36,7 +40,8 @@ const ROUTES = {
 };
 
 const navHtml = (active, mobile) => NAV.filter(n => !mobile || n[3]).map(([r, t, i, m]) =>
-  `<a href="#/${r}" class="${active === r ? 'on' : ''}"${active === r ? ' aria-current="page"' : ''}>${svg(i)}<span>${mobile ? m : t}</span></a>`).join('');
+  `<a href="#/${r}" class="${active === r ? 'on' : ''}"${active === r ? ' aria-current="page"' : ''}>${svg(i)}<span>${mobile ? m : t}</span></a>`).join('') +
+  (mobile ? '' : `<a href="legacy/" class="nav-ext" target="_blank" rel="noopener">${svg('ext')}<span>Classic calculator</span></a>`);
 function parse(){
   const [a, ...rest] = (location.hash.replace(/^#\/?/, '') || '').split('/').map(decodeURIComponent);
   const b = rest.join('/');
@@ -99,7 +104,8 @@ function openSearch(){
 function theme(){
   const btn = $('#theme'), order = ['auto', 'light', 'dark'];
   const get = () => document.documentElement.dataset.theme || 'auto';
-  const label = () => { btn.textContent = 'Theme: ' + get(); };
+  const NAME = {auto:'Theme follows your system', light:'Light theme', dark:'Dark theme'};
+  const label = () => { const t = get(); btn.innerHTML = svg({auto:'auto', light:'sun', dark:'moon'}[t]); btn.title = NAME[t] + ' (click to change)'; btn.setAttribute('aria-label', NAME[t]); };
   btn.addEventListener('click', () => {
     const next = order[(order.indexOf(get()) + 1) % 3];
     if (next === 'auto') delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme = next;
@@ -111,12 +117,16 @@ function theme(){
 }
 
 function freshness(){
-  const s = db.meta?.sources || {}, bad = Object.entries(s).filter(([, v]) => v.ok === false);
-  const line = (k, t) => s[k]?.asof ? `<div>${t}: ${dstr(s[k].asof)}</div>` : '';
-  const head = statusHtml() || `<div class="status${bad.length ? ' bad' : ''}" title="${bad.map(([k, v]) => k + ': ' + esc(v.error || 'failed')).join('\n')}"><i></i>${bad.length ? bad.length + ' source' + (bad.length > 1 ? 's' : '') + ' failed' : 'Refreshed ' + ago(db.meta?.updated)}</div>`;
-  $('#mrefresh')?.classList.toggle('run', running());
-  $('#freshness').innerHTML = head + line('utt', 'UTT AMIS') + line('navview', 'Other funds') + line('dse', 'DSE') + line('treasury', 'BoT auctions') + line('fx', 'Exchange rates') +
-    '<a href="legacy/" style="margin-top:4px">Classic calculator ↗</a>';
+  const s = db.meta?.sources || {}, bad = Object.entries(s).filter(([, v]) => v.ok === false), run = running();
+  const NAMES = {utt:'UTT AMIS', navview:'Other funds', dse:'DSE', treasury:'BoT auctions', fx:'Exchange rates'};
+  const text = run ? 'Refreshing…' : bad.length ? bad.length + ' source' + (bad.length > 1 ? 's' : '') + ' failed' : 'Data ' + ago(db.meta?.updated);
+  const btn = $('#refresh');
+  btn.className = 'data-btn' + (run ? ' run' : bad.length ? ' bad' : '');
+  btn.innerHTML = `<i class="dot"></i><span>${text}</span>${svg('refresh').replace('<svg', '<svg width="14" height="14"')}`;
+  btn.title = (bad.length ? bad.map(([k, v]) => (NAMES[k] || k) + ' failed: ' + (v.error || '')).join('\n') + '\n' : '') +
+    Object.entries(NAMES).filter(([k]) => s[k]?.asof).map(([k, n]) => n + ': ' + dstr(s[k].asof)).join('\n') + '\nClick to refresh or see details';
+  btn.setAttribute('aria-label', text + '. Refresh data');
+  $('#mrefresh')?.classList.toggle('run', run);
 }
 
 (async function boot(){
@@ -129,7 +139,6 @@ function freshness(){
   }
   initRefresh({onChange:freshness, onData:() => { freshness(); route(); }});
   freshness();
-  $('#refresh').innerHTML = `${svg('refresh').replace('<svg', '<svg width="14" height="14"')}<span>Refresh data</span>`;
   $('#refresh').addEventListener('click', openRefresh);
   $('#mrefresh').innerHTML = svg('refresh').replace('<svg', '<svg width="19" height="19"');
   $('#mrefresh').addEventListener('click', openRefresh);

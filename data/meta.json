@@ -14,7 +14,7 @@
     },
     "dse": {
       "ok": true,
-      "at": "2026-11-16T09:48:47Z",
+      "at": "2026-11-16T11:16:43Z",
       "companies": 28,
       "of": 28,
       "asof": "2026-11-13"
@@ -42,5 +42,5 @@
     "DSE USL: ignored a bad print of 10 on 2020-07-15 (it reversed within a few sessions)",
     "DSE USL: close moved from 5 to 25 on 2026-02-02; a split or data error? Add it to config/dse.json if it is a split."
   ],
-  "updated": "2026-11-16T09:50:09Z"
+  "updated": "2026-11-16T11:16:43Z"
 }

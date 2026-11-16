@@ -55,7 +55,13 @@ def run_dse(meta: dict) -> None:
     raw = dse.fetch(list(cfg["tickers"]), log=log)
     ok = [t for t, v in raw.items() if v.get("rows")]
     prev = read_json(DATA / "dse.json")
-    out, warn = build.build_dse(cfg, raw, prev)
+    try:   # market watch: today's session so far (15-minute delay) and market caps for the price caps
+        wt, wt_at = dse.watch(Http()), now_iso()
+        log(f"DSE market watch: {len(wt)} securities")
+    except Exception as e:
+        wt, wt_at = {}, None
+        meta["warnings"].append(f"DSE market watch: {e}")
+    out, warn = build.build_dse(cfg, raw, prev, wt, wt_at)
     if not ok and prev:
         meta["sources"]["dse"] = {"ok": False, "at": now_iso(), "error": "no company pages could be read"}
         log("DSE FAILED: kept previous dse.json")

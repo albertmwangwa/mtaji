@@ -9,7 +9,8 @@ import {getHoldings, saveHoldings} from '../lib/holdings.js';
 
 export default function portfolio(app){
   const T = db.dse.tickers, H = getHoldings().filter(r => T[r.t]);
-  const st = load('portfolio-set', {years:5, basis:'ease', dg:5, reinv:false, fees:true});
+  const st = load('portfolio-set', {years:5, basis:'model', dg:5, reinv:false, fees:true});
+  if (!st.v2){ st.basis = 'model'; st.v2 = 1; }   // the model replaced the fixed trend as the default
   const tickers = Object.keys(T).sort();
   app.innerHTML = `
   <div class="page-head"><div><h1>My DSE portfolio</h1><p>Buy and hold several shares together, now or in later years. See what the whole portfolio could be worth, how much each share adds, and how much the mix lowers your risk.</p></div></div>

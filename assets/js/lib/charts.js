@@ -9,12 +9,15 @@ export function colors(){
 }
 export const seriesColor = i => colors().series[i % 10];
 
-function base(c, {stacked = false, money = true, y1 = false, logY = false, xType = 'category', xTick = null, zero = true} = {}){
+function base(c, {stacked = false, money = true, y1 = false, logY = false, xType = 'category', xTick = null, zero = true, yMin, yMax, xMin} = {}){
   const tick = {color:c.muted, font:{size:11}};
   const scales = {
     x:{type:xType, stacked, grid:{display:false}, border:{color:c.line}, ticks:Object.assign({maxRotation:0, autoSkip:true, autoSkipPadding:10}, tick, xTick ? {callback:xTick} : {})},
     y:{type:logY ? 'logarithmic' : 'linear', stacked, position:'left', beginAtZero:!logY && zero, grid:{color:c.line, drawTicks:false}, border:{display:false}, ticks:Object.assign({padding:6, maxTicksLimit:7, callback:v => money ? compact(v) : v}, tick)}
   };
+  if (xMin != null) scales.x.min = xMin;
+  if (yMin != null) scales.y.min = yMin;
+  if (yMax != null) scales.y.max = yMax;
   if (y1) scales.y1 = {position:'right', beginAtZero:true, grid:{display:false}, border:{display:false}, ticks:Object.assign({maxTicksLimit:7, callback:v => compact(v)}, tick)};
   return {responsive:true, maintainAspectRatio:false, animation:{duration:250}, interaction:{mode:'index', intersect:false},
     plugins:{legend:{display:false}, tooltip:{backgroundColor:c.surface, titleColor:c.ink, bodyColor:c.muted, borderColor:c.line, borderWidth:1, cornerRadius:10, padding:12,

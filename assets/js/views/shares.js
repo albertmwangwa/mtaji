@@ -1,5 +1,5 @@
 import {db} from '../data.js';
-import {compact, fmt, fmt2, ppHtml, dstr, esc, date} from '../lib/fmt.js';
+import {compact, fmt, fmt2, pp, ppHtml, dstr, esc, date} from '../lib/fmt.js';
 import {seg, bind, load, persist, kpi, $, spark, thin, table} from '../lib/ui.js';
 import {draw as plot, line, colors} from '../lib/charts.js';
 import {SECTOR, dividendOf} from '../engine/dse.js';
@@ -28,16 +28,17 @@ export default function shares(app){
     ${seg('sort', [['turn', 'Most traded'], ['d1', 'Day'], ['y1', '12 months'], ['yld', 'Dividend yield'], ['az', 'A–Z']], {label:'Sort by'})}
   </div>
   <div class="tbl" id="sl"></div>
-  <p class="foot">Day, 1W and 1M compare with the close 1, 5 and 21 sessions earlier; 12M with a year ago. Dividend yield = the regular annual dividend from the DSE record divided by today's price, before tax. Shares marked <span class="chip">X</span> are cross-listed Kenyan companies. "Traded" counts sessions with at least one trade in the past year; thinly traded prices can be stale.</p>`;
+  <p class="foot">Day, 1W and 1M compare with the close 1, 5 and 21 sessions earlier; 12M with a year ago. Dividend yield = the regular annual dividend from the DSE record divided by today's price, before tax. Shares marked <span class="chip">X</span> are cross-listed Kenyan companies; those that have not traded on the DSE in a year show the DSE reference price. "Model, 1 yr" is the Mtaji model's central change over the next year, with the range it is built to hold 8 times in 10; open a share for how it is made and how well it tested. "Traded" counts sessions with at least one trade in the past year; thinly traded prices can be stale.</p>`;
   const yld = s => { const d = dividendOf(s).dps; return d ? d/s.close*100 : -1; };
   const draw = () => {
     persist('shares', st);
     const rows = all.filter(([, s]) => st.sec === 'all' || s.sec === st.sec).sort((a, b) =>
       st.sort === 'az' ? a[0].localeCompare(b[0]) : st.sort === 'yld' ? yld(b[1]) - yld(a[1]) : st.sort === 'turn' ? b[1].liq.avgTurn - a[1].liq.avgTurn : (b[1].chg[st.sort] ?? -1e9) - (a[1].chg[st.sort] ?? -1e9));
-    $('#sl', app).innerHTML = `<table><thead><tr><th>Share</th><th>Sector</th><th>Close</th><th>Day</th><th>1W</th><th>1M</th><th>12M</th><th>Last year</th><th>Dividend</th><th>Yield</th><th>Traded</th><th></th></tr></thead><tbody>` +
+    $('#sl', app).innerHTML = `<table><thead><tr><th>Share</th><th>Sector</th><th>Close</th><th>Day</th><th>1W</th><th>1M</th><th>12M</th><th>Last year</th><th title="Mtaji model: central price change over the next year, and the range it should land in 8 times in 10">Model, 1 yr</th><th>Dividend</th><th>Yield</th><th>Traded</th><th></th></tr></thead><tbody>` +
       rows.map(([t, s]) => { const d = dividendOf(s);
-        return `<tr class="link" data-go="#/shares/${t}"><td><b>${t}</b>${s.x ? ' <span class="chip">X</span>' : ''}<span class="sub">${esc(s.name)}</span></td><td>${SECTOR[s.sec]}</td><td><b>${fmt(s.close)}</b>${s.date !== db.dse.asof ? `<span class="sub">${dstr(s.date)}</span>` : ''}</td>
+        return `<tr class="link" data-go="#/shares/${t}"><td><b>${t}</b>${s.x ? ' <span class="chip">X</span>' : ''}<span class="sub">${esc(s.name)}</span></td><td>${SECTOR[s.sec]}</td><td><b>${fmt(s.ref && s.refq ? s.refq.last : s.close)}</b>${s.ref ? '<span class="sub">DSE reference</span>' : s.date !== db.dse.asof ? `<span class="sub">${dstr(s.date)}</span>` : ''}</td>
           <td>${ppHtml(s.chg.d1)}</td><td>${ppHtml(s.chg.w1)}</td><td>${ppHtml(s.chg.m1)}</td><td>${ppHtml(s.chg.y1, 1)}</td><td>${spark(thin(s.daily.slice(-250).map(r => r[1]), 50), {w:84, h:24})}</td>
+          <td>${s.model?.h?.['1y'] ? ppHtml((s.model.h['1y'][1]/s.close - 1)*100, 0) + `<span class="sub">${pp((s.model.h['1y'][0]/s.close - 1)*100, 0)} to ${pp((s.model.h['1y'][2]/s.close - 1)*100, 0)}</span>` : s.ref ? '<span class="mut">reference price</span>' : '–'}</td>
           <td>${d.dps ? fmt2(d.dps, 2) + (d.stale ? `<span class="sub">last paid ${d.stale}</span>` : '') : '–'}</td><td>${d.dps ? (d.dps/s.close*100).toFixed(2) + '%' : '–'}</td>
           <td>${s.liq.traded}/${s.liq.sessions}<span class="sub">${s.liq.avgTurn ? compact(s.liq.avgTurn) + '/day' : 'no trades'}</span></td>
           <td><button class="btn sm" data-add="${t}" title="Add to my portfolio">+ Portfolio</button></td></tr>`; }).join('') + '</tbody></table>';

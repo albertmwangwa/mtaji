@@ -122,6 +122,13 @@ def market(http: Http) -> dict:
     return {"indices": list(idx.values()), "stats": stats, "ticker": ticker, "report_date": report.group(1) if report else None}
 
 
+def watch(http: Http) -> dict:
+    """Market watch (all equities): DSE's 15-minute-delayed view of the current session for every security
+    (last/reference price, previous close, % change, volume, high, low) and its market capitalisation."""
+    d = http.get(SITE + "/all-equities").replace('\\"', '"')
+    return {o["symbol"]: o for o in (_json_after(d, '"quotes":[') or []) if o.get("symbol")}
+
+
 def listed_bonds(http: Http) -> dict:
     gov = http.get(SITE + "/investors/products/government-bonds").replace('\\"', '"')
     rows = _json_after(gov, '"rows":[') or []

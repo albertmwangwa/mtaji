@@ -268,3 +268,21 @@ td .spk{display:inline-block;vertical-align:middle}
 @keyframes rf-spin{to{transform:rotate(360deg)}}
 @keyframes rf-pulse{50%{opacity:.3}}
 @media (prefers-reduced-motion:reduce){.mob-refresh.run svg,.status.run i,.rf-steps li.on i{animation:none}}
+
+/* ---------- v4: compact sidebar footer ---------- */
+.side-foot{flex-direction:row;align-items:center;gap:6px;padding:10px 4px 0;border-top:1px solid var(--line);margin-top:auto}
+.data-btn{flex:1;min-width:0;display:flex;align-items:center;gap:8px;height:34px;padding:0 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink-2);font-size:12.5px;cursor:pointer;text-align:left}
+.data-btn span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.data-btn svg{flex:none;color:var(--muted)}
+.data-btn:hover{background:var(--sunk);color:var(--ink)}
+.data-btn .dot{width:8px;height:8px;border-radius:50%;background:var(--good);flex:none}
+.data-btn.bad .dot{background:var(--bad)}
+.data-btn.run .dot{background:var(--accent);animation:rf-pulse 1.2s ease-in-out infinite}
+.data-btn.run svg{animation:rf-spin 1.2s linear infinite}
+.ico-btn{width:34px;height:34px;flex:none;display:grid;place-items:center;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink-2);cursor:pointer}
+.ico-btn:hover{background:var(--sunk);color:var(--ink)}
+.ico-btn svg{width:16px;height:16px}
+.data-btn:focus-visible,.ico-btn:focus-visible{outline:2px solid var(--ring);outline-offset:2px}
+.nav .nav-ext{margin-top:10px;padding-top:12px;border-top:1px solid var(--line);border-radius:0 0 6px 6px;color:var(--muted);font-size:13px}
+.nav .nav-ext svg{width:16px;height:16px}
+@media (prefers-reduced-motion:reduce){.data-btn.run .dot,.data-btn.run svg{animation:none}}
