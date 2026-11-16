@@ -9,11 +9,11 @@ export function colors(){
 }
 export const seriesColor = i => colors().series[i % 10];
 
-function base(c, {stacked = false, money = true, y1 = false, logY = false, xType = 'category', xTick = null} = {}){
+function base(c, {stacked = false, money = true, y1 = false, logY = false, xType = 'category', xTick = null, zero = true} = {}){
   const tick = {color:c.muted, font:{size:11}};
   const scales = {
     x:{type:xType, stacked, grid:{display:false}, border:{color:c.line}, ticks:Object.assign({maxRotation:0, autoSkip:true, autoSkipPadding:10}, tick, xTick ? {callback:xTick} : {})},
-    y:{type:logY ? 'logarithmic' : 'linear', stacked, position:'left', beginAtZero:!logY, grid:{color:c.line, drawTicks:false}, border:{display:false}, ticks:Object.assign({padding:6, maxTicksLimit:7, callback:v => money ? compact(v) : v}, tick)}
+    y:{type:logY ? 'logarithmic' : 'linear', stacked, position:'left', beginAtZero:!logY && zero, grid:{color:c.line, drawTicks:false}, border:{display:false}, ticks:Object.assign({padding:6, maxTicksLimit:7, callback:v => money ? compact(v) : v}, tick)}
   };
   if (y1) scales.y1 = {position:'right', beginAtZero:true, grid:{display:false}, border:{display:false}, ticks:Object.assign({maxTicksLimit:7, callback:v => compact(v)}, tick)};
   return {responsive:true, maintainAspectRatio:false, animation:{duration:250}, interaction:{mode:'index', intersect:false},
@@ -22,7 +22,7 @@ function base(c, {stacked = false, money = true, y1 = false, logY = false, xType
     scales};
 }
 
-/** Draw (or redraw) a chart on a canvas. opts: stacked, y1, logY, xType, xTick, tooltip (callbacks), money */
+/** Draw (or redraw) a chart on a canvas. opts: stacked, y1, logY, xType, xTick, tooltip (callbacks), money, zero (y axis starts at 0) */
 export function draw(canvas, {type = 'bar', labels, datasets, ...opts}){
   if (!window.Chart || !canvas) return null;
   const c = colors(), o = base(c, opts);

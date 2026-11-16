@@ -38,8 +38,9 @@ export default function compare(app, arg){
       return pts.map(r => [r[0], (r[1] + dpu*((date(r[0]) - date(pts[0][0]))/864e5/30.4375))/b]);   // payouts added back for the Bond Fund
     }
     if (years === 1 && f.spark?.length > 4){
-      const n = f.spark.length, end = date(f.date);
-      return f.spark.map((v, i) => [addDays(end, -7*(n - 1 - i)).toISOString().slice(0, 10), v/f.spark[0]]);
+      const n = f.spark.length, end = date(f.date), from = addDays(end, -366);
+      const pts = f.spark.map((v, i) => [addDays(end, -7*(n - 1 - i)), v]).filter(p => p[0] >= from);   // the weekly series can run past a year
+      return pts.map(p => [p[0].toISOString().slice(0, 10), p[1]/pts[0][1]]);
     }
     if (years === 1 && f.yld && Number.isFinite(f.ret?.y1)){   // priced at 1.00: grow at the published yield
       const end = date(f.date), r = f.ret.y1/100;
@@ -57,7 +58,7 @@ export default function compare(app, arg){
     $('#sub', app).textContent = `Over the last ${years} year${years > 1 ? 's' : ''}, from the published prices${F.some(f => f.dpu) ? ' (Bond Fund payouts included)' : ''}.`;
     $('#note', app).textContent = missing.length ? `Not enough history for: ${missing.join(', ')}. ${years > 1 ? 'Daily history is published for UTT AMIS funds; for others it builds up as the pipeline runs.' : ''}` : 'Past growth does not promise future growth.';
     draw($('#ch', app), {type:'line', datasets:shown.map(x => line(x.f.name, x.s.map(p => ({x:date(p[0]).getTime(), y:st.amt*p[1]})), c.series[F.indexOf(x.f)], {pointRadius:0})),
-      xType:'linear', xTick:v => dstr(new Date(v)).replace(/^\d+ /, ''), interaction:{mode:'nearest', axis:'x', intersect:false},
+      xType:'linear', zero:false, xTick:v => dstr(new Date(v)).replace(/^\d+ /, ''), interaction:{mode:'nearest', axis:'x', intersect:false},
       tooltip:{title:it => dstr(new Date(it[0].parsed.x)), label:ctx => ' ' + ctx.dataset.label + ': TZS ' + fmt(ctx.parsed.y)}});
     const row = (lbl, fn) => `<tr><td>${lbl}</td>${F.map(fn).map(v => `<td>${v}</td>`).join('')}</tr>`;
     const best = k => Math.max(...F.map(f => f.ret?.[k] ?? -1e9));

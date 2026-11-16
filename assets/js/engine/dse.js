@@ -56,13 +56,19 @@ export function dividendOf(s){
   return {dps:d.regular || 0, stale:d.stale, note:d.note, years:d.years || [], list:d.list || []};
 }
 
-/** Buy at p0 today, hold `years`, sell at the end. Dividends paid at each year end, taxed, optionally reinvested. */
-export function holdSim({p0, amt, years, path, dps0, dg = 0, reinv = false, fees = true}){
-  let n = sharesFor(amt, p0, fees), price = p0, divCash = 0, divTot = 0;
-  const buyVal = n*p0, buyFee = fees ? dseFee(buyVal) : 0, left = amt - buyVal - buyFee;
+/** Buy in year `start` (0 = today) at the forecast price then, hold to the end of year `years`, sell.
+ *  Dividends are paid at each year end while held, taxed, optionally reinvested. Rows before the purchase have n = 0. */
+export function holdSim({p0, amt, years, path, dps0, dg = 0, reinv = false, fees = true, start = 0}){
+  start = Math.max(0, Math.min(Math.round(start) || 0, years - 1));
+  let price = p0;
+  const rows = [];
+  for (let y = 0; y < start; y++){ rows.push({y, price, n:0, dps:0, div:0, val:0, cash:0, pre:true}); price *= 1 + path[y]; }
+  const pBuy = price, n0 = sharesFor(amt, pBuy, fees);
+  let n = n0, divCash = 0, divTot = 0;
+  const buyVal = n*pBuy, buyFee = fees ? dseFee(buyVal) : 0, left = amt - buyVal - buyFee;
   let feeTot = buyFee, reFee = 0;
-  const rows = [{y:0, price, n, dps:0, div:0, val:buyVal, cash:0}];
-  for (let y = 1; y <= years; y++){
+  rows.push({y:start, price, n, dps:0, div:0, val:buyVal, cash:0});
+  for (let y = start + 1; y <= years; y++){
     price *= 1 + path[y - 1];
     const dps = dps0*Math.pow(1 + dg, y - 1), div = n*dps*(1 - WHT);
     divTot += div;
@@ -72,12 +78,12 @@ export function holdSim({p0, amt, years, path, dps0, dg = 0, reinv = false, fees
     } else divCash += div;
     rows.push({y, price, n, dps, div, val:n*price, cash:divCash});
   }
-  const last = rows[rows.length - 1], sellFee = fees ? dseFee(last.val) : 0;
+  const last = rows[rows.length - 1], sellFee = fees ? dseFee(last.val) : 0, held = years - start;
   feeTot += sellFee;
   const sale = last.val - sellFee, end = sale + divCash + left;
-  return {rows, end, sale, divCash, divTot, feeTot, buyFee, reFee, sellFee, buyVal, left, n0:rows[0].n,
-    irr:amt > 0 && end > 0 ? Math.pow(end/amt, 1/years) - 1 : NaN,
-    breakEven:rows[0].n > 0 ? ((buyVal + buyFee)/rows[0].n)/(1 - (fees ? dseFee(buyVal + buyFee)/(buyVal + buyFee) : 0)) : 0};
+  return {rows, end, sale, divCash, divTot, feeTot, buyFee, reFee, sellFee, buyVal, left, n0, start, pBuy, held,
+    irr:amt > 0 && end > 0 ? Math.pow(end/amt, 1/held) - 1 : NaN,
+    breakEven:n0 > 0 ? ((buyVal + buyFee)/n0)/(1 - (fees ? dseFee(buyVal + buyFee)/(buyVal + buyFee) : 0)) : 0};
 }
 
 /** Annual volatility of a weighted mix, from the covariance of monthly log returns over the last 5 years. */

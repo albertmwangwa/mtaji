@@ -1,40 +1,110 @@
+<div align="center">
+
 # Mtaji
 
-A Tanzania investment planner. It compares unit trusts, DSE shares and Bank of Tanzania securities using live data, and lets you plan with them. It is a static website, so it is free to host, and a small Python pipeline keeps its data fresh.
+**A Tanzania investment planner. It shows unit trusts, DSE shares and Bank of Tanzania securities with live data, and plans with them.**
 
-## Pages
+[**Open Mtaji →**](https://albertmwangwa.github.io/mtaji/) · [Classic calculator](https://albertmwangwa.github.io/mtaji/legacy/) · [How the data refresh works](#how-the-data-stays-fresh)
 
-| Page | What it does |
+[![Refresh data and deploy](https://github.com/albertmwangwa/mtaji/actions/workflows/site.yml/badge.svg)](https://github.com/albertmwangwa/mtaji/actions/workflows/site.yml)
+![Static site](https://img.shields.io/badge/hosting-GitHub%20Pages-24292f)
+![No build step](https://img.shields.io/badge/build-none-2ea44f)
+![Python standard library](https://img.shields.io/badge/pipeline-Python%20stdlib-3776ab)
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/overview-dark.png">
+  <img alt="Mtaji overview: DSE indices, USD/TZS, T-bill yield, unit trust assets and the top funds by 12-month return" src="docs/screenshots/overview.png" width="100%">
+</picture>
+
+</div>
+
+## What you can do
+
+| | |
 |---|---|
-| Overview | Market strip (DSE indices, market value, USD/TZS, 364-day T-bill, each with a 1-year sparkline), unit trust assets, top funds, DSE movers |
-| Unit trusts | All 28 schemes with 12-month sparklines, filterable by type and manager. Each fund page shows price history, returns and a "what if I had invested" check from real NAVs; USD funds also show the shilling value |
-| Compare funds | Up to 6 funds on one chart (growth of the same amount over 1, 3 or 5 years) and side by side: returns, size, fees, exit charge, minimum, access |
-| Fund planner | Lump sum, top-ups, one-off contributions, and withdrawals marked as **Loan payment** or **Personal use**. Also covers a salary loan with top-ups. Views by year, by month and monthly earnings (the compounding path), plus a **Loan path** card, plan comparisons and the same plan in every other fund |
-| DSE shares | DSEI, TSI and the three sector indices over the last year; listed ETFs with their price against NAV; all 28 companies with sparklines. Each share has a 5- or 10-year history, a forecast with a likely range, dividends and a buy-and-hold calculator |
-| Portfolio | Several shares held together: the total result, each share's contribution, and diversification (volatility from 5 years of monthly correlations) |
-| Bills & bonds | Calculators fed by the latest BoT auction for each tenor; the yield curve; a year of T-bill yields; every recent bill and bond auction with its cover ratio; and all 188 government and 24 corporate bonds listed on the DSE, searchable |
-| Goals | What a saving plan grows to, or how much to save to reach a target, in today's shillings too |
+| **Overview** | A market strip with the DSE indices, market value, USD/TZS and the 364-day T-bill, each with a 1-year sparkline. Below it: unit trust assets, the top funds and the DSE movers. |
+| **Unit trusts** | All 28 schemes from UTT AMIS, iTrust, Orbit, Sanlam, Vertex, Zan, WHI and others. Each fund shows its price history and returns, and a "what if I had invested" check based on real prices. |
+| **Compare funds** | Up to 6 funds on one chart, showing what the same amount became over 1, 3 or 5 years. A table compares returns, size, fees, exit charge, minimum and how fast you get your money back. |
+| **Fund planner** | A lump sum, top-ups, one-off amounts, and withdrawals you mark as **loan payment** or **personal use**. It also covers a salary loan. Views by year, by month, and month by month showing the compounding, plus a loan path and the same plan in every other fund. |
+| **DSE shares** | All 28 listed companies, the five indices and the listed ETFs (price against NAV). Each share has up to 10 years of history, a forecast with a likely range, dividends and a buy-and-hold calculator. |
+| **Portfolio** | Several shares held together, **each bought in the year you choose**. It shows the total result, each share's contribution, a money-weighted annual return, and how much the mix lowers your risk. |
+| **Bills & bonds** | Calculators fed by the latest BoT auction for each tenor, the yield curve, a year of T-bill yields, every recent auction with its cover ratio, and all 212 bonds listed on the DSE. |
+| **Goals** | What a saving plan grows to, or how much you need to save to reach a target, also shown in today's shillings. |
 
-## Layout
+Press <kbd>Ctrl</kbd> + <kbd>K</kbd> (or <kbd>/</kbd>) anywhere to jump to a fund, share or page. Light and dark themes follow your system, or you can choose one.
+
+## A closer look
+
+<table>
+<tr>
+<td width="50%"><b>Fund planner</b><br>Month-by-month compounding, top-ups, and withdrawals that go to a loan or to you.<br><br><img src="docs/screenshots/planner.png" alt="Fund planner with a lump sum, monthly top-ups and the yearly growth chart"></td>
+<td width="50%"><b>Portfolio</b><br>Buy shares now or in later years. The dashed line is the money put in so far.<br><br><img src="docs/screenshots/portfolio.png" alt="DSE portfolio with four shares bought in different years, stacked by share"></td>
+</tr>
+<tr>
+<td><b>Compare funds</b><br>What TZS 10M became in each fund, from the published prices.<br><br><img src="docs/screenshots/compare.png" alt="Four unit trusts compared on one growth chart"></td>
+<td><b>DSE share</b><br>History, a forecast with its likely range, dividends and buy-and-hold.<br><br><img src="docs/screenshots/share.png" alt="CRDB share page with price history and forecast band"></td>
+</tr>
+<tr>
+<td colspan="2"><b>Bills &amp; bonds</b><br>The yield curve and a year of T-bill yields from Bank of Tanzania auctions, with every auction's cover ratio.<br><br><img src="docs/screenshots/treasury.png" alt="Treasury yield curve, T-bill yield history and the auction table"></td>
+</tr>
+</table>
+
+## How the data stays fresh
+
+```mermaid
+flowchart LR
+  subgraph Sources
+    UTT[UTT AMIS<br>daily NAVs]
+    NV[NAVView TZ<br>other fund managers]
+    DSE[Dar es Salaam<br>Stock Exchange]
+    BOT[Bank of Tanzania<br>auctions + FX]
+  end
+  subgraph GH[GitHub Actions]
+    P[python -m pipeline] --> D[(data/*.json)]
+  end
+  UTT & NV & DSE & BOT --> P
+  D -->|commit + deploy| Pages[GitHub Pages<br>static site]
+  Pages --> You((You))
+  You -.->|Refresh data button| GH
+```
+
+1. **On a schedule:** at 09:17 EAT Monday to Saturday (after UTT AMIS publishes NAVs), 16:47 EAT on weekdays (after the DSE closes) and 21:23 EAT on Wednesdays (after BoT auction results). The workflow runs `python -m pipeline`, commits the new `data/` files and republishes the site. It runs on GitHub's servers, so no computer needs to be on.
+2. **Whenever you want:** click **Refresh data** in the sidebar (the round arrow button on phones). It starts the same workflow, shows each step, and loads the new figures into the open page when they are live, usually 4 to 6 minutes later.
+   - The first time, the button asks for a fine-grained GitHub token limited to this repository, with **Actions** set to **Read and write**.
+   - The token is kept only in that browser's localStorage and is never part of the site.
+   - Visitors without a token can use **Load latest data**.
+3. **If a source is down:** its last good file is kept and the failure is recorded in `data/meta.json`. The sidebar then shows "1 source failed"; hover over it to see which.
+
+You can also start a refresh from the repository's **Actions** tab → **Refresh data and deploy** → **Run workflow**, or run `python -m pipeline` locally and push. Run `git pull` before working locally, because each refresh adds commits.
+
+### Sources
+
+| Source | What it provides |
+|---|---|
+| **UTT AMIS** | The full official daily NAV history (sale and repurchase prices, fund size), from the endpoint behind uttamis.co.tz/fund-performance. |
+| **NAVView TZ** | The latest NAV, returns and size for the other managers. Each run appends that day's NAV, so daily history builds up for these funds. |
+| **DSE** | Each company's full trading history and dividend notices. Also all five indices, total market value, the price of every listed security (ETFs included) and the listed government and corporate bonds. NMB is adjusted for its 1-for-10 split. One-off bad prints are dropped and logged. |
+| **Bank of Tanzania** | The last 26 T-bill and 36 T-bond auctions (yields, prices, amounts offered and bid, ISIN, maturity), plus daily exchange rates for 43 currencies. A tenor with no recent auction keeps its last figure, marked as an estimate. |
+
+Returns (1M, 3M, YTD, 12M, 3Y and 5Y a year, and since launch) are computed once, in `pipeline/build.py`. The Bond Fund's figures include its TZS 1.00 monthly payout. **New listings** go in `pipeline/config/dse.json`; **new funds** go in `pipeline/config/funds.json`, keyed by their NAVView id.
+
+## Project layout
 
 ```
 index.html              app shell (no build step)
 assets/app.css          design system: shadcn/ui zinc tokens, Manrope + Space Grotesk, light/dark
-assets/js/main.js       navigation and hash routing (#/funds/utt.bond, #/shares/CRDB, ...)
+assets/js/main.js       navigation, hash routing (#/funds/utt.bond, #/shares/CRDB, ...), quick search
 assets/js/data.js       loads data/*.json
 assets/js/engine/       the maths: sim.js (compounding), loan.js, dse.js (fees, forecast, portfolio), treasury.js
 assets/js/views/        one module per page
-assets/js/lib/          formatting, form binding, charts (Chart.js 4.4.1 from cdnjs), refresh.js (the in-app Refresh data button)
-data/                   generated by the pipeline (only the 'tax' block in treasury.json is hand-set)
+assets/js/lib/          formatting, form binding, charts (Chart.js 4.4.1), refresh.js (the Refresh data button)
+data/                   generated by the pipeline (only the 'tax' block in treasury.json is set by hand)
 pipeline/               Python 3.10+, standard library only
-  sources/utt.py        UTT AMIS official daily NAVs (all history)
-  sources/navview.py    NAVView TZ: latest NAV, returns and size for every other scheme
-  sources/dse.py        DSE trading history and dividends per company; indices, market value, price ticker (ETFs) and listed bonds
-  sources/bot.py        Bank of Tanzania T-bill and T-bond auction results, daily exchange rates
+  sources/              utt.py, navview.py, dse.py, bot.py
   build.py              returns, split adjustment, bad-print filter, dividends, liquidity
-  config/funds.json     facts the sources don't publish: type, fee, minimum, payouts
-  config/dse.json       ticker list, splits, dividend overrides and dividends missing from the DSE site
-legacy/                 the original single-file calculator
+  config/               facts the sources don't publish: fund type, fee, minimum, payouts; DSE tickers and splits
+legacy/                 the original single-file calculator (served at /legacy/)
+docs/screenshots/       images used in this README
 ```
 
 ## Run it locally
@@ -46,60 +116,18 @@ python -m http.server 8000  # then open http://localhost:8000
 
 The pages load JSON with `fetch`, so open them through a local server, not straight from disk.
 
-## Data pipeline
+## Hosting
 
-- **UTT AMIS:** the full official daily NAV history (sale and repurchase prices, fund size), read from the endpoint behind uttamis.co.tz/fund-performance.
-- **NAVView TZ:** the latest figures for the other managers (iTrust, Orbit, Sanlam, Vertex, Zan, WHI, TSL, APeF, Alpha). Each run also appends that day's NAV to `data/funds-history.json`, so daily history builds up for these funds over time.
-- **DSE:** each company's complete trading history and dividend notices. NMB is adjusted for its 1-for-10 split on 24 Aug 2026. One-off bad prints that reverse within a few sessions are dropped, and each one is logged.
-- **Returns** (1M, 3M, YTD, 12M, 3Y and 5Y a year, since launch) are computed once, in `build.py`. The Bond Fund's figures include its TZS 1.00 monthly payout.
-- **Failures are contained.** If a source fails, its previous file is kept, and `data/meta.json` records what failed along with any data warnings. The sidebar shows how fresh each source is.
+**GitHub Pages (how this repository runs).** In **Settings → Pages**, set **Source** to **GitHub Actions**. `.github/workflows/site.yml` deploys on every push and refreshes the data on the schedule above. If a Tanzanian site ever blocks GitHub's US-based runners, the failure shows in the sidebar and the last good data stays in place. You can then run the pipeline locally and push, or use a self-hosted runner.
 
-- **Bank of Tanzania:** the last 26 T-bill auctions and 36 T-bond auctions (yields, prices, amounts offered and bid, ISIN, maturity), read from the JSON endpoints behind the "View" buttons on bot.go.tz, plus the daily exchange rates for 43 currencies. The latest auction for each tenor feeds the calculators. A tenor with no recent auction (currently the 7-year) keeps its last figure and is marked as an estimate.
-- **DSE market:** all five indices with a year of daily values, total market value, the price of every listed security (ETFs included, recorded daily so ETF history builds up), and the government and corporate bonds listed on the exchange. If the DSE has opened a session with no trades yet, the pipeline uses the last session that had trades.
-
-**New listings** go in `pipeline/config/dse.json` (ticker, name, sector). **New funds** go in `pipeline/config/funds.json`, keyed by their NAVView id.
-
-## How the automatic refresh works
-
-`.github/workflows/site.yml` runs on GitHub's servers, so your computer doesn't need to be on:
-
-1. **When:** 09:17 EAT Monday to Saturday (after UTT AMIS publishes NAVs), 16:47 EAT on weekdays (after the DSE closes) and 21:23 EAT on Wednesdays (after BoT auction results). The times use odd minutes because GitHub delays or skips scheduled runs on the hour. Even so, a scheduled run can start a little late.
-2. **What:** it runs `python -m pipeline`. That downloads everything again, rebuilds the files in `data/`, commits them as "data: refresh …" and publishes the site to GitHub Pages, so visitors see the new numbers a minute or two later.
-3. **If a source is down:** its last good file is kept and the failure is recorded in `data/meta.json`. The sidebar then shows "1 source failed"; hover it to see which.
-4. **To refresh now:** click **Refresh data** in the sidebar (the round arrow button on phones). It starts the workflow, shows its progress, and loads the new figures into the page when the site has been republished, usually 4 to 6 minutes later. Starting a workflow needs a GitHub token. The first time, the button asks for a fine-grained token limited to this repository with the **Actions** permission set to **Read and write**. The token is saved only in that browser's localStorage and is never part of the site. Visitors without a token can still use **Load latest data**, which picks up any refresh that has already been published.
-
-   You can also go to the repository's **Actions** tab, open **Refresh data and deploy**, and click **Run workflow**, or run `python -m pipeline` locally and push.
-
-Run `git pull` before working locally, because the refresh adds commits.
-
-## Hosting (free)
-
-### GitHub Pages, with automatic data refresh
-
-1. Create a GitHub repository, then push this folder to its `main` branch:
-   ```bash
-   git init -b main
-   git add .
-   git commit -m "Mtaji platform"
-   git remote add origin https://github.com/<you>/mtaji.git
-   git push -u origin main
-   ```
-2. In the repository, go to **Settings → Pages** and set **Source** to **GitHub Actions**.
-3. `.github/workflows/site.yml` then deploys on every push and refreshes the data on the schedule above (see "How the automatic refresh works").
-
-If a Tanzanian site blocks GitHub's US-based runners, the failure shows up in `data/meta.json` and the last good data stays in place. You can then run `python -m pipeline` on your own machine and push, or use a self-hosted runner.
-
-### Cloudflare Pages or Netlify
-
-Connect the repository with no build command and the repository root as the output directory. Keep the GitHub Actions workflow running for the data refresh: each data commit triggers a redeploy.
+**Cloudflare Pages or Netlify.** Connect the repository with no build command and the repository root as the output directory. Keep the GitHub Actions workflow for the data refresh: each data commit triggers a redeploy.
 
 ## Notes on the maths
 
-- **Unit trusts** compound monthly at (1 + yearly rate)^(1/12) − 1. "Ease to long-run" steps the yearly rate from the starting figure to the long-run rate for the fund's type: money market 11%, fixed income 11.5%, balanced 13%, equity 14%.
-- **DSE forecast:**
-  - **Method:** a straight-line fit to the logarithm of the last 60 month-end closes. The likely range is lognormal, set by the share's own 5-year volatility, and covers the 10th to 90th percentile.
-  - **Trading costs:** brokerage of 1.7% on the first TZS 10M of a trade, 1.5% on the next 40M and 0.8% above that, plus 18% VAT. On top come DSE 0.14%, CMSA 0.14%, Fidelity Fund 0.02% and CDS 0.06% (plus VAT). That is about 2.38% each way on a trade under TZS 10M.
-  - **Tax:** 5% is withheld on dividends.
-- **Loans:** interest is charged monthly on the reducing balance. A withdrawal marked Loan payment either keeps the deduction and finishes the loan sooner, or keeps the end date and lowers the deduction.
+- **Unit trusts** compound monthly at (1 + yearly rate)^(1/12) − 1. "Ease to long-run" steps from the starting rate to the long-run rate for the fund's type: money market 11%, fixed income 11.5%, balanced 13%, equity 14%.
+- **DSE forecast:** a straight-line fit to the logarithm of the last 60 month-end closes. The likely range is lognormal, set by the share's own 5-year volatility, and covers the 10th to 90th percentile.
+- **Portfolio:** a share bought in a later year is bought at the forecast price for that year and earns dividends only from then on. The portfolio's annual return is money-weighted (an IRR over the yearly cash flows), so money put in later counts for less time. Diversification uses the covariance of 5 years of monthly returns.
+- **Trading costs:** brokerage of 1.7% on the first TZS 10M of a trade, 1.5% on the next 40M and 0.8% above that, plus 18% VAT. On top come DSE 0.14%, CMSA 0.14%, Fidelity Fund 0.02% and CDS 0.06% (plus VAT). That is about 2.38% each way on a trade under TZS 10M. 5% tax is withheld on dividends.
+- **Loans:** interest is charged monthly on the reducing balance. A withdrawal marked as a loan payment either keeps the deduction and finishes the loan sooner, or keeps the end date and lowers the deduction.
 
-Past returns do not promise future returns. Projections are illustrations, not advice.
+> Past returns do not promise future returns. Projections are illustrations, not financial advice.
