@@ -6,8 +6,10 @@ on:
   push:
     branches: [main]
   schedule:
-    - cron: "30 13 * * 1-5"   # 16:30 EAT, after the DSE closes
-    - cron: "0 6 * * 1-6"     # 09:00 EAT, after UTT AMIS publishes the previous day's NAVs
+    # GitHub may delay or skip runs at busy times (on the hour), so these use odd minutes; times are UTC (EAT = UTC+3)
+    - cron: "17 6 * * 1-6"    # 09:17 EAT: UTT AMIS has published the previous day's NAVs
+    - cron: "47 13 * * 1-5"   # 16:47 EAT: after the DSE closes and BoT posts the day's rates
+    - cron: "23 18 * * 3"     # 21:23 EAT Wednesday: T-bill and bond auction results are out
   workflow_dispatch:
 
 permissions:
@@ -51,7 +53,11 @@ jobs:
           ref: ${{ github.ref_name }}   # pick up the data commit made by the refresh job
       - uses: actions/configure-pages@v5
       - name: Assemble site
-        run: mkdir _site && cp -r index.html assets data _site/ && touch _site/.nojekyll
+        run: |
+          mkdir -p _site/legacy
+          cp -r index.html assets data _site/
+          cp "legacy/Mtaji Investment Calculators.html" _site/legacy/index.html
+          touch _site/.nojekyll
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site

@@ -1,6 +1,7 @@
 import {db} from '../data.js';
-import {compact, fmt, fmt2, ppHtml, dstr, esc} from '../lib/fmt.js';
-import {seg, bind, load, persist, kpi, $} from '../lib/ui.js';
+import {compact, fmt, fmt2, ppHtml, dstr, esc, date} from '../lib/fmt.js';
+import {seg, bind, load, persist, kpi, $, spark, thin, table} from '../lib/ui.js';
+import {draw as plot, line, colors} from '../lib/charts.js';
 import {SECTOR, dividendOf} from '../engine/dse.js';
 import {addHolding, getHoldings} from '../lib/holdings.js';
 
@@ -17,6 +18,11 @@ export default function shares(app){
     ${kpi('Most traded over a year', big[0], 'TZS ' + compact(big[1].liq.avgTurn) + ' a day on average')}
     ${kpi('Dividend tax', '5%', 'withheld on DSE dividends')}
   </div>
+  <div class="grid" style="grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);margin-bottom:16px" id="sh-top">
+    <div class="card"><div class="card-head"><div><h2>DSE indices, last 12 months</h2><p>Each index rebased to 100 a year ago.</p></div></div><div class="legend" id="ilg"></div><div class="chart"><canvas id="ich"></canvas></div></div>
+    <div class="card"><div class="card-head"><div><h2>Exchange-traded funds</h2><p>DSE price against the fund's own NAV.</p></div></div><div class="tbl" id="etf"></div>
+      <p class="hint" style="margin-top:10px">A discount means you buy the fund's holdings for less than they are worth; you can also only sell at the market price. ETF prices are recorded each day by the pipeline.</p></div>
+  </div>
   <div class="toolbar">
     ${seg('sec', [['all', 'All'], ['BI', 'Banks & finance'], ['IA', 'Industrial'], ['CS', 'Services']], {label:'Sector'})}
     ${seg('sort', [['turn', 'Most traded'], ['d1', 'Day'], ['y1', '12 months'], ['yld', 'Dividend yield'], ['az', 'A–Z']], {label:'Sort by'})}
@@ -28,14 +34,27 @@ export default function shares(app){
     persist('shares', st);
     const rows = all.filter(([, s]) => st.sec === 'all' || s.sec === st.sec).sort((a, b) =>
       st.sort === 'az' ? a[0].localeCompare(b[0]) : st.sort === 'yld' ? yld(b[1]) - yld(a[1]) : st.sort === 'turn' ? b[1].liq.avgTurn - a[1].liq.avgTurn : (b[1].chg[st.sort] ?? -1e9) - (a[1].chg[st.sort] ?? -1e9));
-    $('#sl', app).innerHTML = `<table><thead><tr><th>Share</th><th>Sector</th><th>Close</th><th>Day</th><th>1W</th><th>1M</th><th>12M</th><th>Dividend</th><th>Yield</th><th>Traded</th><th></th></tr></thead><tbody>` +
+    $('#sl', app).innerHTML = `<table><thead><tr><th>Share</th><th>Sector</th><th>Close</th><th>Day</th><th>1W</th><th>1M</th><th>12M</th><th>Last year</th><th>Dividend</th><th>Yield</th><th>Traded</th><th></th></tr></thead><tbody>` +
       rows.map(([t, s]) => { const d = dividendOf(s);
         return `<tr class="link" data-go="#/shares/${t}"><td><b>${t}</b>${s.x ? ' <span class="chip">X</span>' : ''}<span class="sub">${esc(s.name)}</span></td><td>${SECTOR[s.sec]}</td><td><b>${fmt(s.close)}</b>${s.date !== db.dse.asof ? `<span class="sub">${dstr(s.date)}</span>` : ''}</td>
-          <td>${ppHtml(s.chg.d1)}</td><td>${ppHtml(s.chg.w1)}</td><td>${ppHtml(s.chg.m1)}</td><td>${ppHtml(s.chg.y1, 1)}</td>
+          <td>${ppHtml(s.chg.d1)}</td><td>${ppHtml(s.chg.w1)}</td><td>${ppHtml(s.chg.m1)}</td><td>${ppHtml(s.chg.y1, 1)}</td><td>${spark(thin(s.daily.slice(-250).map(r => r[1]), 50), {w:84, h:24})}</td>
           <td>${d.dps ? fmt2(d.dps, 2) + (d.stale ? `<span class="sub">last paid ${d.stale}</span>` : '') : '–'}</td><td>${d.dps ? (d.dps/s.close*100).toFixed(2) + '%' : '–'}</td>
           <td>${s.liq.traded}/${s.liq.sessions}<span class="sub">${s.liq.avgTurn ? compact(s.liq.avgTurn) + '/day' : 'no trades'}</span></td>
           <td><button class="btn sm" data-add="${t}" title="Add to my portfolio">+ Portfolio</button></td></tr>`; }).join('') + '</tbody></table>';
   };
+  const mk = db.dse.market || {}, NAMES = {DSEI:'All Share (DSEI)', TSI:'Tanzania Share (TSI)', BI:'Banks & finance', IA:'Industrial', CS:'Services'};
+  function charts(){
+    const c = colors(), ix = mk.indices || [];
+    $('#ilg', app).innerHTML = ix.map((i, k) => `<span><i style="background:${c.series[k]}"></i>${NAMES[i.name] || i.name} <b>${fmt2(i.close, 0)}</b> ${ppHtml((i.series.at(-1)[1]/i.series[0][1] - 1)*100, 0)}</span>`).join('');
+    plot($('#ich', app), {type:'line', datasets:ix.map((i, k) => line(NAMES[i.name] || i.name, i.series.map(p => ({x:date(p[0]).getTime(), y:p[1]/i.series[0][1]*100})), c.series[k], {borderWidth:i.name.length > 2 ? 2.2 : 1.5})),
+      xType:'linear', money:false, xTick:v => dstr(new Date(v)).replace(/^\d+ /, ''), interaction:{mode:'nearest', axis:'x', intersect:false},
+      tooltip:{title:it => dstr(new Date(it[0].parsed.x)), label:ctx => ' ' + ctx.dataset.label + ': ' + ctx.parsed.y.toFixed(1)}});
+    const E = Object.entries(mk.etfs || {});
+    $('#etf', app).innerHTML = E.length ? table(['ETF', 'Price', 'NAV', 'vs NAV'], E.map(([t, e]) =>
+      `<tr${e.fund ? ` class="link" data-go="#/funds/${e.fund}"` : ''}><td><b>${esc(t)}</b><span class="sub">${esc(e.name)}</span></td><td>${fmt(e.price)}</td><td>${e.nav ? fmt2(e.nav, 2) : '–'}</td><td>${Number.isFinite(e.prem) ? `<span class="${e.prem < 0 ? 'up' : 'down'}">${e.prem > 0 ? '+' : ''}${e.prem}%</span><span class="sub">${e.prem < 0 ? 'discount' : 'premium'}</span>` : '–'}</td></tr>`)) : '<p class="hint">No ETF prices yet.</p>';
+  }
+  const q = matchMedia('(max-width:1000px)'), fit = () => { $('#sh-top', app).style.gridTemplateColumns = q.matches ? 'minmax(0,1fr)' : 'minmax(0,1.6fr) minmax(0,1fr)'; }; fit(); q.addEventListener('change', fit);
+  charts();
   bind(app, st, draw);
   app.addEventListener('click', e => {
     const a = e.target.closest('[data-add]');
@@ -43,4 +62,5 @@ export default function shares(app){
     const r = e.target.closest('[data-go]'); if (r) location.hash = r.dataset.go;
   });
   draw();
+  return {refresh:charts};
 }

@@ -201,3 +201,33 @@ details.card[open]>summary{margin-bottom:12px}
 .planner .g4{grid-template-columns:repeat(2,minmax(0,1fr))}
 @media (min-width:1600px){.planner .g4{grid-template-columns:repeat(4,minmax(0,1fr))}}
 .kpi .v{overflow-wrap:break-word}
+
+/* ---------- v2: sparklines, market strip, search palette, compare ---------- */
+.spk{display:block}
+.spk .l{fill:none;stroke-width:1.6;stroke-linejoin:round;stroke-linecap:round}
+.spk .a{opacity:.12}
+.spk.up .l{stroke:var(--good)}.spk.up .a{fill:var(--good)}
+.spk.down .l{stroke:var(--bad)}.spk.down .a{fill:var(--bad)}
+td .spk{display:inline-block;vertical-align:middle}
+.strip{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-bottom:16px}
+@media (max-width:1100px){.strip{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:640px){.strip{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.tick{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:6px;min-width:0}
+.tick .k{font-size:12.5px;color:var(--muted);font-weight:500;display:flex;justify-content:space-between;gap:6px}
+.tick .v{font-family:var(--f-display);font-size:20px;font-weight:600;letter-spacing:-.02em}
+.tick .spk{width:100%}
+.search-btn{display:flex;align-items:center;gap:8px;width:100%;border:1px solid var(--line);background:var(--surface);border-radius:6px;height:34px;padding:0 10px;color:var(--muted);font-size:13px;cursor:pointer;margin-bottom:10px;box-shadow:var(--shadow)}
+.search-btn kbd,.pal kbd{margin-left:auto;font:500 11px var(--f-body);border:1px solid var(--line);border-radius:4px;padding:1px 5px;background:var(--sunk)}
+.pal-bg{position:fixed;inset:0;background:rgb(0 0 0 / .4);z-index:50;display:flex;align-items:flex-start;justify-content:center;padding:12vh 16px 16px}
+.pal{width:min(560px,100%);background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:0 20px 50px rgb(0 0 0 / .25);overflow:hidden}
+.pal input{width:100%;border:0;border-bottom:1px solid var(--line);padding:14px 16px;font-size:15px;outline:0;background:transparent}
+.pal ul{list-style:none;margin:0;padding:6px;max-height:50vh;overflow:auto}
+.pal li a{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:6px;color:var(--ink)}
+.pal li a:hover,.pal li a.on{background:var(--sunk);text-decoration:none}
+.pal li small{color:var(--muted);margin-left:auto;font-size:12px;white-space:nowrap}
+.pal .grp{font-size:11.5px;color:var(--muted);padding:8px 10px 4px;text-transform:uppercase;letter-spacing:.05em}
+.picker{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.pill{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:9999px;padding:4px 6px 4px 10px;font-size:13px;background:var(--surface)}
+.pill button{border:0;background:var(--sunk);border-radius:9999px;width:20px;height:20px;cursor:pointer;color:var(--muted);line-height:1}
+.mob-search{display:none}
+@media (max-width:900px){.mob-search{display:flex;position:fixed;right:14px;bottom:76px;z-index:21;width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:var(--surface);box-shadow:0 4px 14px rgb(0 0 0 / .15);align-items:center;justify-content:center;cursor:pointer;color:var(--ink)}}

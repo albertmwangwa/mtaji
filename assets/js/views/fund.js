@@ -1,4 +1,4 @@
-import {db, loadHistory, CAT} from '../data.js';
+import {db, loadHistory, CAT, usd} from '../data.js';
 import {compact, ppHtml, pp, fmt, fmt2, dstr, esc, iso, date, parseMoney, money} from '../lib/fmt.js';
 import {seg, stat, kpi, $} from '../lib/ui.js';
 import {draw, line, colors, alpha} from '../lib/charts.js';
@@ -14,9 +14,9 @@ export default function fund(app, id){
   app.innerHTML = `
   <div class="crumb"><a href="#/funds">Unit trusts</a> / ${esc(f.mgr)}</div>
   <div class="page-head"><div><h1>${esc(f.name)}</h1><p>${esc(f.desc || '')}</p></div>
-    <div style="display:flex;gap:8px">${calcable(f) ? `<a class="btn primary" href="#/plan/${f.id}">Plan with this fund</a>` : ''}${f.link ? `<a class="btn" href="${esc(f.link)}" target="_blank" rel="noopener">Manager site ↗</a>` : ''}</div></div>
+    <div style="display:flex;gap:8px"><a class="btn" href="#/compare/${f.id}">Compare</a>${calcable(f) ? `<a class="btn primary" href="#/plan/${f.id}">Plan with this fund</a>` : ''}${f.link ? `<a class="btn" href="${esc(f.link)}" target="_blank" rel="noopener">Manager site ↗</a>` : ''}</div></div>
   <div class="grid g4" style="margin-bottom:16px">
-    ${kpi('Price per unit', cur + ' ' + fmt2(f.nav, 4), (f.src || '') + ' · ' + dstr(f.date), true)}
+    ${kpi('Price per unit', cur + ' ' + fmt2(f.nav, 4), cur === 'USD' && usd() ? '≈ TZS ' + fmt2(f.nav*usd(), 2) + ' at the BoT rate · ' + dstr(f.date) : (f.src || '') + ' · ' + dstr(f.date), true)}
     ${kpi(f.yld ? 'Published yearly yield' : 'Last 12 months', Number.isFinite(R.y1) ? pp(R.y1) : Number.isFinite(R.inc) ? pp(R.inc) : '–', Number.isFinite(R.y1) ? (f.dpu ? 'including payouts' : 'price change') : 'since launch')}
     ${kpi('Fund size', f.aum ? cur + ' ' + compact(f.aum) : '–', esc(CAT[f.cat]) + (f.risk ? ' · ' + esc(f.risk) + ' risk' : ''))}
     ${kpi('Costs', f.fee != null ? f.fee.toFixed(2) + '% a year' : '–', load > 0 ? (load*100).toFixed(1) + '% exit charge (repurchase ' + fmt2(f.rep, 4) + ')' : 'no exit charge published')}

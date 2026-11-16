@@ -118,6 +118,13 @@ def build_funds(cfg: dict, utt_hist: dict, nv: list[dict], prev_hist: dict, asof
             r = h["rows"][-1]
             rec.update(nav=r[1], sale=last[2] if last else r[1], rep=r[2], aum=r[3], date=r[0], src="UTT AMIS")
             rec["ret"] = fund_returns(h["rows"], m.get("dpu") or 0)
+            # weekly index for the last year (start = 100), same shape as NAVView's sparkline
+            cut = _shift(d(r[0]), years=-1).isoformat()
+            yr = [x for x in h["rows"] if x[0] >= cut][::5]
+            if yr and yr[-1] is not h["rows"][-1]:
+                yr.append(h["rows"][-1])
+            if len(yr) > 4:
+                rec["spark"] = [round(x[1] / yr[0][1] * 100, 2) for x in yr]
         elif src.get("nav_per_unit"):
             nav = src["nav_per_unit"]
             rec.update(nav=r4(nav), sale=r4(src.get("sale_price") or nav), rep=r4(src.get("repurchase_price") or nav),
@@ -205,6 +212,15 @@ def _drop_spikes(rows, jump=0.55, window=3):
 def build_dse(cfg: dict, raw: dict, prev: dict | None):
     tickers, out, warnings = cfg["tickers"], {}, []
     prev_t = (prev or {}).get("tickers", {})
+    # the DSE lists today's session before anything trades (all zero turnover); use the last session with trades
+    turn_by_day = {}
+    for v in raw.values():
+        for r in v.get("rows") or []:
+            turn_by_day[r[0]] = turn_by_day.get(r[0], 0) + r[6]
+    active = [d_ for d_, t_ in turn_by_day.items() if t_ > 0]
+    last_active = max(active) if active else None
+    if last_active:
+        raw = {k: (dict(v, rows=[r for r in v["rows"] if r[0] <= last_active]) if v.get("rows") else v) for k, v in raw.items()}
     asof = max((v["rows"][-1][0] for v in raw.values() if v.get("rows")), default=None)
     for t, meta in tickers.items():
         src = raw.get(t) or {}
@@ -284,3 +300,74 @@ def build_dse(cfg: dict, raw: dict, prev: dict | None):
     up = sum(1 for v in out.values() if (v["chg"].get("d1") or 0) > 0 and v.get("date") == asof)
     down = sum(1 for v in out.values() if (v["chg"].get("d1") or 0) < 0 and v.get("date") == asof)
     return {"asof": asof, "market": {"turnover": round(total_turn), "up": up, "down": down, "count": len(out)}, "tickers": out}, warnings
+
+
+# ---------------------------------------------------------------- treasury (BoT auctions)
+def build_treasury(bills: list, bonds: list, prev: dict, asof_run: str):
+    prev = prev or {}
+    out = {"_about": "Generated from Bank of Tanzania auction results (bot.go.tz). 'tax' is kept from the previous file; edit it there.",
+           "asof": None, "bills": {}, "bonds": {}, "tax": prev.get("tax") or {"bill_wht": 10, "bond_wht_under3y": 10, "bond_wht_3y_plus": 0, "dividend_wht": 5},
+           "history": {"bills": [], "bonds": []}}
+    for a in sorted(bills, key=lambda x: x["date"] or "", reverse=True):
+        for tenor, t in a["tenors"].items():
+            if t.get("y") and tenor not in out["bills"]:
+                out["bills"][tenor] = {"y": t["y"], "price": t.get("price"), "date": a["date"], "no": a["no"],
+                                       "src": f"BoT auction {a['date']} (no. {a['no']})"}
+        out["history"]["bills"].append({"no": a["no"], "date": a["date"],
+                                        "y": {k: v["y"] for k, v in a["tenors"].items() if v.get("y")},
+                                        "cover": {k: round(v["tendered"] / v["offered"], 2) for k, v in a["tenors"].items() if v.get("offered") and v.get("tendered") is not None},
+                                        "offered": sum(v.get("offered") or 0 for v in a["tenors"].values()),
+                                        "tendered": sum(v.get("tendered") or 0 for v in a["tenors"].values()),
+                                        "accepted": sum(v.get("accepted") or 0 for v in a["tenors"].values())})
+    for b in sorted(bonds, key=lambda x: x["date"] or "", reverse=True):
+        t = str(b.get("tenor"))
+        if b.get("tenor") and b.get("ytm") and t not in out["bonds"]:
+            out["bonds"][t] = {"c": b["c"], "y": b["ytm"], "price": b.get("price"), "isin": b.get("isin"), "date": b["date"], "no": b["no"],
+                               "redemption": b.get("redemption"), "src": f"BoT auction {b['date']} (bond no. {b['no']})"}
+        out["history"]["bonds"].append({k: b.get(k) for k in ("no", "issue", "date", "tenor", "c", "ytm", "price", "isin", "redemption", "offered", "tendered", "accepted", "bids")})
+    # tenors with no recent auction keep their previous figures (marked as estimates if they never came from an auction)
+    for kind in ("bills", "bonds"):
+        for tenor, v in (prev.get(kind) or {}).items():
+            if tenor not in out[kind]:
+                out[kind][tenor] = dict(v, stale=True)
+    out["bills"] = dict(sorted(out["bills"].items(), key=lambda kv: int(kv[0])))
+    out["bonds"] = dict(sorted(out["bonds"].items(), key=lambda kv: int(kv[0])))
+    dates = [v["date"] for v in list(out["bills"].values()) + list(out["bonds"].values()) if v.get("date") and not v.get("stale")]
+    out["asof"] = max(dates) if dates else prev.get("asof")
+    return out
+
+
+# ---------------------------------------------------------------- DSE market, ETFs, listed bonds
+ETF_NAV = {"IEACLC-ETF": "itrust.iEACLC", "VERTEX-ETF": "vertex.etf", "ZAN TIMIZA ETF": "zansec.timiza-etf", "ZAN-ETF": None}
+ETF_NAME = {"IEACLC-ETF": "iTrust EAC Large Cap ETF", "VERTEX-ETF": "Vertex ETF", "ZAN TIMIZA ETF": "Zan Timiza ETF Fund of Funds", "ZAN-ETF": "Zan ETF"}
+
+
+def build_market(mk: dict, prev: dict | None, funds: list, asof: str):
+    prev_etf = ((prev or {}).get("etfs") or {})
+    nav = {f["id"]: f for f in funds or []}
+    etfs = {}
+    for sym, t in mk.get("ticker", {}).items():
+        if "ETF" not in sym:
+            continue
+        e = prev_etf.get(sym, {"rows": []})
+        rows = e["rows"]
+        if asof and (not rows or rows[-1][0] < asof):
+            rows.append([asof, t["price"]])
+        f = nav.get(ETF_NAV.get(sym) or "")
+        rec = {"name": ETF_NAME.get(sym, sym), "price": t["price"], "pct": t["pct"], "rows": rows[-800:], "fund": ETF_NAV.get(sym)}
+        if f and f.get("nav"):
+            rec.update(nav=f["nav"], navDate=f.get("date"), prem=pct(t["price"] / f["nav"] - 1, 1))
+        etfs[sym] = rec
+    st = mk.get("stats") or {}
+    return {"indices": mk.get("indices") or (prev or {}).get("indices", []), "cap": st.get("capitalization"), "listed": st.get("listed"), "etfs": etfs,
+            "ticker": mk.get("ticker", {})}
+
+
+def build_bonds(lb: dict, asof: str):
+    gov = [b for b in lb.get("government", []) if not b["matured"] and (b.get("maturity") or "9999") >= asof]
+    corp = [b for b in lb.get("corporate", []) if (b.get("maturity") or "9999") >= asof
+            and "GOVERNMENT OF" not in (b.get("issuer") or "").upper()]   # the DSE fixed-income list repeats Treasury bonds
+    gov.sort(key=lambda b: b.get("maturity") or "")
+    corp.sort(key=lambda b: b.get("maturity") or "")
+    return {"asof": asof, "government": gov, "corporate": corp,
+            "summary": {"gov_count": len(gov), "gov_amount": round(sum(b["amount"] for b in gov)), "corp_count": len(corp)}}

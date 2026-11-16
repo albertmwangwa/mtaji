@@ -114,3 +114,25 @@ export const opt = (v, t, sel) => `<option value="${esc(v)}"${String(v) === Stri
 export const table = (head, rows, foot = '') => `<table><thead><tr>${head.map(h => `<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody>${foot ? `<tfoot>${foot}</tfoot>` : ''}</table>`;
 export const stat = (label, value, sub = '') => `<div class="stat"><small>${label}</small><b>${value}</b>${sub ? `<em>${sub}</em>` : ''}</div>`;
 export const kpi = (label, value, sub = '', lead = false) => `<div class="kpi${lead ? ' lead' : ''}"><div class="k">${label}</div><div class="v">${value}</div>${sub ? `<div class="s">${sub}</div>` : ''}</div>`;
+
+/** Inline SVG sparkline: values -> a small line, coloured by direction (first vs last). */
+export function spark(values, {w = 96, h = 28, fill = true} = {}){
+  const v = (values || []).filter(Number.isFinite);
+  if (v.length < 2) return '<span class="mut">–</span>';
+  const lo = Math.min(...v), hi = Math.max(...v), r = hi - lo || 1, step = w/(v.length - 1);
+  const pts = v.map((x, i) => [i*step, h - 2 - (x - lo)/r*(h - 4)]);
+  const d = pts.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join('');
+  const cls = v.at(-1) >= v[0] ? 'up' : 'down';
+  return `<svg class="spk ${cls}" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" aria-hidden="true">${fill ? `<path d="${d}L${w} ${h}L0 ${h}Z" class="a"/>` : ''}<path d="${d}" class="l"/></svg>`;
+}
+/** "3 hours ago" style text for an ISO timestamp. */
+export function ago(isoTs){
+  if (!isoTs) return '';
+  const s = (Date.now() - new Date(isoTs).getTime())/1000;
+  if (s < 90) return 'just now';
+  if (s < 5400) return Math.round(s/60) + ' min ago';
+  if (s < 129600) return Math.round(s/3600) + ' h ago';
+  return Math.round(s/86400) + ' days ago';
+}
+/** Evenly thin a long series to about n points (keeps the last one). */
+export const thin = (arr, n = 60) => { if (arr.length <= n) return arr; const k = arr.length/n, out = []; for (let i = 0; i < n; i++) out.push(arr[Math.floor(i*k)]); out.push(arr.at(-1)); return out; };
