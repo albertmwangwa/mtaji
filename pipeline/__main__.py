@@ -115,7 +115,38 @@ def run_treasury(meta: dict) -> None:
         meta["sources"]["fx"] = {"ok": False, "at": now_iso(), "error": str(e)}
 
 
+def _session_open(eat) -> bool:
+    """DSE continuous trading: 9:30 to 16:00 EAT, Monday to Friday (public holidays not known here)."""
+    return eat.weekday() < 5 and (9, 30) <= (eat.hour, eat.minute) <= (16, 0)
+
+
+def run_live() -> int:
+    """Quick intraday job: DSE market watch only (15-minute-delayed view of the session). Writes data/live.json
+    and appends a snapshot to data/intraday/<day>.json when anything changed. Leaves meta.json alone."""
+    import datetime as dt
+    eat = dt.datetime.utcnow() + dt.timedelta(hours=3)
+    try:
+        wt = dse.watch(Http())
+    except Exception as e:
+        log(f"live: DSE market watch failed: {e}")
+        return 1
+    at, day = now_iso(), eat.date().isoformat()
+    q = {s: [o.get("last"), o.get("prevClose"), o.get("pct"), o.get("volume") or 0, o.get("high"), o.get("low")] for s, o in wt.items()}
+    write_json(DATA / "live.json", {"at": at, "day": day, "open": _session_open(eat), "fields": ["last", "prev", "pct", "vol", "high", "low"], "q": q})
+    path = DATA / "intraday" / f"{day}.json"
+    snaps = read_json(path, {}) or {}
+    snaps.setdefault("day", day); snaps.setdefault("snaps", [])
+    sig = {s: v[3:6] for s, v in q.items() if v[3]}
+    if sig and (not snaps["snaps"] or snaps["snaps"][-1]["q"] != sig):
+        snaps["snaps"].append({"at": at, "q": sig})
+        write_json(path, snaps)
+    log(f"live.json: {len(q)} securities, {sum(v[3] for v in q.values()):,} shares traded so far, session {'open' if _session_open(eat) else 'closed'}")
+    return 0
+
+
 def main(argv: list[str]) -> int:
+    if set(argv) == {"live"}:
+        return run_live()
     jobs = set(argv) or {"funds", "dse", "treasury"}
     meta = read_json(DATA / "meta.json", {}) or {}
     meta.setdefault("sources", {})

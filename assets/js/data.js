@@ -42,4 +42,14 @@ export const managers = () => [...new Set(fundsPriced().map(f => f.mgr))];
 
 /** Listed government and corporate bonds (~150 KB), loaded by the bills & bonds page only. */
 export async function loadBonds(){ if (!db.bonds) db.bonds = await get('bonds'); return db.bonds; }
+/** The DSE session so far (data/live.json, written every 20 minutes during trading hours), bypassing caches. */
+export async function loadLive(){
+  try { const r = await fetch('data/live.json?t=' + Date.now(), {cache:'no-store'}); return r.ok ? r.json() : null; } catch(e){ return null; }
+}
+/** Today's quote for share t from live.json, when it is newer than the last close in dse.json. */
+export function liveToday(t, L){
+  const s = db.dse?.tickers?.[t], q = L?.q?.[t];
+  if (!s || !q || !(q[3] > 0) || !(L.day > s.date) || (q[3] === s.vol && q[4] === s.high)) return null;
+  return {vol:q[3], high:q[4], low:q[5], prev:q[1], at:L.at, open:L.open, live:true};
+}
 export const usd = () => db.fx?.rates?.USD?.mean || null;

@@ -286,3 +286,7 @@ td .spk{display:inline-block;vertical-align:middle}
 .nav .nav-ext{margin-top:10px;padding-top:12px;border-top:1px solid var(--line);border-radius:0 0 6px 6px;color:var(--muted);font-size:13px}
 .nav .nav-ext svg{width:16px;height:16px}
 @media (prefers-reduced-motion:reduce){.data-btn.run .dot,.data-btn.run svg{animation:none}}
+
+/* ---------- v5: live session indicator ---------- */
+.live-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--good);margin-right:7px;vertical-align:1px;animation:rf-pulse 1.4s ease-in-out infinite}
+@media (prefers-reduced-motion:reduce){.live-dot{animation:none}}

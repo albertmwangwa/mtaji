@@ -1,6 +1,6 @@
 // One DSE share: today's session, price history with the Mtaji model's forecast, value against T-bills,
 // dividends, and a buy-and-hold calculator.
-import {db} from '../data.js';
+import {db, loadLive, liveToday} from '../data.js';
 import {compact, fmt, fmt2, money as tzs, pct, pp, ppHtml, dstr, esc, clamp} from '../lib/fmt.js';
 import {$, bind, load, persist, money, number, select, seg, check, stat, kpi, table, ago} from '../lib/ui.js';
 import {draw, bar, line, colors, alpha} from '../lib/charts.js';
@@ -8,6 +8,8 @@ import {SECTOR, FORECAST, HORIZON, HORIZON_YEARS, histStats, growthPath, dividen
 import {geoAvg} from '../engine/sim.js';
 import {addHolding} from '../lib/holdings.js';
 
+/** Roughly DSE trading hours (Mon-Fri 9:30-16:00 EAT), to decide whether to keep checking for live data. */
+const isSessionHours = () => { const e = new Date(Date.now() + 3*3600e3), d = e.getUTCDay(), m = e.getUTCHours()*60 + e.getUTCMinutes(); return d > 0 && d < 6 && m >= 9*60 + 15 && m <= 16*60 + 30; };
 const CAP_RULE = {0.15:'15% (market value under TZS 1T)', 0.05:'5% (TZS 1T+, over 2B shares)', 0.02:'2% (TZS 1T+, under 2B shares)'};
 
 export default function share(app, t){
@@ -34,7 +36,7 @@ export default function share(app, t){
   </div>
   ${s.ref ? `<p class="note warn" style="margin-bottom:16px">${t} has not traded on the DSE in the past year. Its DSE price is a reference figure (for a cross-listed company it follows the home market), so there is no forecast here and buying or selling it on the DSE may not be possible.</p>` : ''}
   ${lowLiq ? `<p class="note warn" style="margin-bottom:16px">${t} traded on only ${s.liq.traded} of ${s.liq.sessions} sessions in the past year, so its price is often stale and selling at the forecast price may not be possible.</p>` : ''}
-  ${s.today ? todayCard() : ''}
+  <div id="today"></div>
   <div class="card" style="margin-bottom:16px">
     <div class="card-head"><div><h2>Price history${M ? ' and forecast' : ''}</h2><p>Month-end closes from the DSE${M ? ', then the Mtaji model\'s central forecast and likely range' : ''}.${split ? ` Earlier prices are divided by ${split[1]} for the ${dstr(split[0])} split.` : ''}</p></div>${seg('range', [['5', '5Y'], ['10', '10Y']], {cls:'sm', label:'History'})}</div>
     <div class="stats soft" id="hs" style="margin-bottom:14px"></div>
@@ -67,12 +69,14 @@ export default function share(app, t){
     </div>
   </div>`;
 
-  function todayCard(){
-    const d = s.today, cap = s.cap || 0.15, avgVol = s.liq.avgTurn && s.close ? s.liq.avgTurn/s.close : null;
+  let cur = s.today || null, timer = null;
+  function todayCard(d){
+    const cap = s.cap || 0.15, avgVol = s.liq.avgTurn && s.close ? s.liq.avgTurn/s.close : null;
     const share = avgVol ? d.vol/avgVol : null;
-    return `<div class="card" style="margin-bottom:16px"><div class="card-head"><div><h2>Today on the DSE</h2><p>From the DSE market watch (15 minutes delayed), fetched ${ago(d.at)}. Refresh data for a newer view.</p></div></div>
+    const head = d.open ? `<i class="live-dot"></i>Session in progress. DSE market watch, 15 minutes delayed, updated ${ago(d.at)}; this card refreshes itself.` : `DSE market watch (15 minutes delayed), ${ago(d.at)}. ${d.live ? 'The session has closed; the official close appears after the next data refresh.' : 'Refresh data for a newer view.'}`;
+    return `<div class="card" style="margin-bottom:16px"><div class="card-head"><div><h2>Today on the DSE</h2><p>${head}</p></div></div>
       <div class="stats">${stat('Traded so far', fmt(d.vol) + ' shares', share ? (share*100).toFixed(0) + '% of an average day' : '')}${stat("Today's range", fmt(d.low) + ' – ' + fmt(d.high), 'previous close ' + fmt(d.prev))}
-        ${stat('Price cap today', fmt(d.prev*(1 - cap)) + ' – ' + fmt(d.prev*(1 + cap)), '±' + (CAP_RULE[cap] || (cap*100) + '%'))}${stat('Closing price will be', 'within ' + fmt(d.low) + ' – ' + fmt(d.high), "the day's volume-weighted average")}</div>
+        ${stat('Price cap today', fmt(d.prev*(1 - cap)) + ' – ' + fmt(d.prev*(1 + cap)), '±' + (CAP_RULE[cap] || (cap*100) + '%') + (d.low < d.prev*(1 - cap) - 1e-6 || d.high > d.prev*(1 + cap) + 1e-6 ? ' · some trades outside it (negotiated or block trades)' : ''))}${stat('Closing price will be', 'within ' + fmt(d.low) + ' – ' + fmt(d.high), "the day's volume-weighted average")}</div>
       <p class="hint" style="margin-top:12px">The DSE sets the official close as the volume-weighted average price of all the session's trades, provided at least 100 shares trade (Rule 203). It is therefore always inside the day's high–low range. The public feed gives volume, high and low during the session but not the traded prices, so the exact close is known only after 4 pm.</p></div>`;
   }
 
@@ -114,7 +118,7 @@ export default function share(app, t){
     if (M){
       const held = k => M.held?.[k] ?? MM.held?.[k];
       // once today's session has started, its close is bounded by the day's high and low (VWAP, Rule 203)
-      const td = s.today && s.today.low > 0 ? [Math.max(s.today.low, s.today.prev*(1 - M.cap)), (s.today.low + s.today.high)/2, Math.min(s.today.high, s.today.prev*(1 + M.cap))] : null;
+      const td = cur && cur.low > 0 ? [cur.low, (cur.low + cur.high)/2, cur.high] : null;
       $('#fct', app).innerHTML = table(['After', 'Low (1 in 10)', 'Central', 'High (1 in 10)', 'vs last close', 'Held in tests'], HORIZON.filter(([k]) => M.h[k]).map(([k, lbl]) => {
         if (k === '1d' && td) return `<tr><td>Today's close<span class="sub">session in progress</span></td><td>${fmt(td[0])}</td><td><b>${fmt(td[1])}</b></td><td>${fmt(td[2])}</td><td>${ppHtml((td[1]/s.close - 1)*100, 1)}</td><td>always<span class="sub">DSE rule: inside the day's range</span></td></tr>`;
         const [lo, mid, hi] = M.h[k], hd = held(k);
@@ -137,6 +141,14 @@ export default function share(app, t){
     draw($('#ec', app), {labels:r.rows.map(x => 'Y' + x.y), datasets:[bar('Shares', r.rows.map(x => x.val), c.series[0]), bar('Dividend cash', r.rows.map(x => Math.max(0, x.cash)), c.series[1])], stacked:true});
     $('#et', app).innerHTML = table(['Year', 'Price', 'Shares', 'Dividend / share', 'Dividends after tax', 'Value of shares', 'Dividend cash'], r.rows.map(x => `<tr><td>${x.y}</td><td>${fmt(x.price)}</td><td>${fmt(x.n)}</td><td>${x.y ? fmt2(x.dps, 2) : '–'}</td><td>${x.y ? fmt(x.div) : '–'}</td><td>${fmt(x.val)}</td><td>${fmt(x.cash)}</td></tr>`));
   }
-  b.write(); update();
-  return {refresh:update};
+  const showToday = () => { $('#today', app).innerHTML = cur ? todayCard(cur) : ''; };
+  async function poll(){
+    if (document.hidden) return;
+    const L = await loadLive(), d = liveToday(t, L);
+    if (d && (!cur || d.at !== cur.at)){ cur = d; showToday(); update(); }
+    if (!L?.open && timer){ clearInterval(timer); timer = null; }   // stop once the session has closed
+  }
+  b.write(); showToday(); update();
+  poll().then(() => { if (cur?.open || (!cur && isSessionHours())) timer = setInterval(poll, 90e3); });
+  return {refresh:update, destroy:() => { if (timer) clearInterval(timer); }};
 }

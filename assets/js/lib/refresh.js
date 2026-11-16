@@ -44,7 +44,7 @@ async function start(){
   emit();
   try {
     const list = await gh(`/workflows/${WF}/runs?per_page=5`);
-    let run = list.workflow_runs.find(r => r.status !== 'completed' && r.event !== 'push');
+    let run = list.workflow_runs.find(r => r.status !== 'completed' && r.event === 'workflow_dispatch');   // not the quick intraday runs
     if (!run){
       const t0 = Date.now();
       await gh(`/workflows/${WF}/dispatches`, {method:'POST', body:JSON.stringify({ref:'main'})});

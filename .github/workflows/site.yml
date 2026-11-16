@@ -10,6 +10,7 @@ on:
     - cron: "17 6 * * 1-6"    # 09:17 EAT: UTT AMIS has published the previous day's NAVs
     - cron: "47 13 * * 1-5"   # 16:47 EAT: after the DSE closes and BoT posts the day's rates
     - cron: "23 18 * * 3"     # 21:23 EAT Wednesday: T-bill and bond auction results are out
+    - cron: "*/20 6-13 * * 1-5"   # every 20 min, 09:00-16:40 EAT on weekdays: DSE session so far (live job only)
   workflow_dispatch:
 
 permissions:
@@ -31,14 +32,20 @@ jobs:
         with:
           python-version: "3.12"
       - name: Run pipeline
+        # the 20-minute schedule only reads the DSE market watch; everything else runs the full pipeline.
         # exits 1 if any source failed; the data files are still complete (failed sources keep their last good copy)
-        run: python -m pipeline || echo "::warning::Some sources failed, see data/meta.json"
+        run: |
+          if [ "${{ github.event.schedule }}" = "*/20 6-13 * * 1-5" ]; then
+            python -m pipeline live || echo "::warning::DSE market watch could not be read"
+          else
+            python -m pipeline || echo "::warning::Some sources failed, see data/meta.json"
+          fi
       - name: Commit changed data
         run: |
           git config user.name "mtaji-data-bot"
           git config user.email "actions@users.noreply.github.com"
           git add data
-          if git diff --cached --quiet; then echo "No data changes"; else git commit -m "data: refresh $(date -u +%Y-%m-%dT%H:%MZ)" && git push; fi
+          if git diff --cached --quiet; then echo "No data changes"; else git commit -m "data: ${{ github.event.schedule == '*/20 6-13 * * 1-5' && 'live' || 'refresh' }} $(date -u +%Y-%m-%dT%H:%MZ)" && git push; fi
 
   deploy:
     needs: refresh

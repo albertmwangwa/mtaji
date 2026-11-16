@@ -69,11 +69,12 @@ flowchart LR
 ```
 
 1. **On a schedule:** at 09:17 EAT Monday to Saturday (after UTT AMIS publishes NAVs), 16:47 EAT on weekdays (after the DSE closes) and 21:23 EAT on Wednesdays (after BoT auction results). The workflow runs `python -m pipeline`, commits the new `data/` files and republishes the site. It runs on GitHub's servers, so no computer needs to be on.
-2. **Whenever you want:** click **Refresh data** in the sidebar (the round arrow button on phones). It starts the same workflow, shows each step, and loads the new figures into the open page when they are live, usually 4 to 6 minutes later.
+2. **During the DSE session:** every 20 minutes from 09:00 to 16:40 EAT on weekdays, a quick job reads only the DSE market watch (15 minutes delayed). It writes `data/live.json`, adds a snapshot to `data/intraday/<day>.json` when anything changed, and republishes. Open share pages and the shares list pick it up every 90 seconds without reloading. The snapshots build the intraday history an end-of-day model would need. The public feed gives each share's volume, high and low so far, but not traded prices.
+3. **Whenever you want:** click **Refresh data** in the sidebar (the round arrow button on phones). It starts the same workflow, shows each step, and loads the new figures into the open page when they are live, usually 4 to 6 minutes later.
    - The first time, the button asks for a fine-grained GitHub token limited to this repository, with **Actions** set to **Read and write**.
    - The token is kept only in that browser's localStorage and is never part of the site.
    - Visitors without a token can use **Load latest data**.
-3. **If a source is down:** its last good file is kept and the failure is recorded in `data/meta.json`. The sidebar then shows "1 source failed"; hover over it to see which.
+4. **If a source is down:** its last good file is kept and the failure is recorded in `data/meta.json`. The sidebar then shows "1 source failed"; hover over it to see which.
 
 You can also start a refresh from the repository's **Actions** tab → **Refresh data and deploy** → **Run workflow**, or run `python -m pipeline` locally and push. Run `git pull` before working locally, because each refresh adds commits.
 
