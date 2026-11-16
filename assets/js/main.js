@@ -3,6 +3,7 @@ import {loadCore, db, fundsPriced} from './data.js';
 import {dstr, esc} from './lib/fmt.js';
 import {$, ago} from './lib/ui.js';
 import {whenChartReady} from './lib/charts.js';
+import {initRefresh, openRefresh, statusHtml, running} from './lib/refresh.js';
 
 const ICON = {
   home:'<path d="M3 11 12 4l9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
@@ -13,6 +14,7 @@ const ICON = {
   pf:'<path d="M12 3a9 9 0 1 0 9 9h-9z"/><path d="M15 3.5A9 9 0 0 1 20.5 9H15z"/>',
   gov:'<path d="M3 10h18M5 10v8m4-8v8m6-8v8m4-8v8M3 21h18M12 3l9 5H3z"/>',
   goal:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>',
+  refresh:'<path d="M21 12a9 9 0 1 1-2.64-6.36M21 4v5h-5"/>',
   search:'<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>'
 };
 const svg = k => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${ICON[k]}</svg>`;
@@ -111,8 +113,9 @@ function theme(){
 function freshness(){
   const s = db.meta?.sources || {}, bad = Object.entries(s).filter(([, v]) => v.ok === false);
   const line = (k, t) => s[k]?.asof ? `<div>${t}: ${dstr(s[k].asof)}</div>` : '';
-  $('#freshness').innerHTML = `<div class="status${bad.length ? ' bad' : ''}" title="${bad.map(([k, v]) => k + ': ' + esc(v.error || 'failed')).join('\n')}"><i></i>${bad.length ? bad.length + ' source' + (bad.length > 1 ? 's' : '') + ' failed' : 'Refreshed ' + ago(db.meta?.updated)}</div>` +
-    line('utt', 'UTT AMIS') + line('navview', 'Other funds') + line('dse', 'DSE') + line('treasury', 'BoT auctions') + line('fx', 'Exchange rates') +
+  const head = statusHtml() || `<div class="status${bad.length ? ' bad' : ''}" title="${bad.map(([k, v]) => k + ': ' + esc(v.error || 'failed')).join('\n')}"><i></i>${bad.length ? bad.length + ' source' + (bad.length > 1 ? 's' : '') + ' failed' : 'Refreshed ' + ago(db.meta?.updated)}</div>`;
+  $('#mrefresh')?.classList.toggle('run', running());
+  $('#freshness').innerHTML = head + line('utt', 'UTT AMIS') + line('navview', 'Other funds') + line('dse', 'DSE') + line('treasury', 'BoT auctions') + line('fx', 'Exchange rates') +
     '<a href="legacy/" style="margin-top:4px">Classic calculator ↗</a>';
 }
 
@@ -124,7 +127,12 @@ function freshness(){
       <code>python -m http.server</code> in the project folder, then open http://localhost:8000.</p></div>`;
     return;
   }
+  initRefresh({onChange:freshness, onData:() => { freshness(); route(); }});
   freshness();
+  $('#refresh').innerHTML = `${svg('refresh').replace('<svg', '<svg width="14" height="14"')}<span>Refresh data</span>`;
+  $('#refresh').addEventListener('click', openRefresh);
+  $('#mrefresh').innerHTML = svg('refresh').replace('<svg', '<svg width="19" height="19"');
+  $('#mrefresh').addEventListener('click', openRefresh);
   $('#search').innerHTML = `${svg('search').replace('<svg', '<svg width="15" height="15"')}<span>Search</span><kbd>Ctrl K</kbd>`;
   $('#search').addEventListener('click', openSearch);
   $('#msearch').innerHTML = svg('search').replace('<svg', '<svg width="20" height="20"');

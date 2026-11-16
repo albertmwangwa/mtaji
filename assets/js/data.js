@@ -1,9 +1,10 @@
 // Loads the JSON files the pipeline writes into /data. Everything the pages show comes from here.
 const files = {funds:'data/funds.json', history:'data/funds-history.json', dse:'data/dse.json', treasury:'data/treasury.json', meta:'data/meta.json', fx:'data/fx.json', bonds:'data/bonds.json'};
 const cache = {};
+let ver = '';   // set after an in-app refresh so the CDN serves the new files, not cached ones
 
 async function get(name){
-  if (!cache[name]) cache[name] = fetch(files[name], {cache:'no-cache'}).then(r => {
+  if (!cache[name]) cache[name] = fetch(files[name] + (ver ? '?v=' + encodeURIComponent(ver) : ''), {cache:'no-cache'}).then(r => {
     if (!r.ok) throw new Error(files[name] + ' ' + r.status);
     return r.json();
   });
@@ -18,6 +19,18 @@ export async function loadCore(){
   db.funds = f.funds; db.byId = Object.fromEntries(f.funds.map(x => [x.id, x]));
   db.dse = d; db.treasury = t; db.meta = m; db.fx = x;
   return db;
+}
+/** Drop every loaded file and load the core files again (after a data refresh). */
+export async function reloadCore(v){
+  ver = v || String(Date.now());
+  for (const k of Object.keys(cache)) delete cache[k];
+  db.history = {}; db.bonds = null;
+  return loadCore();
+}
+/** The published meta.json, bypassing every cache: used to tell when a refresh has gone live. */
+export async function latestMeta(){
+  const r = await fetch(files.meta + '?t=' + Date.now(), {cache:'no-store'});
+  return r.ok ? r.json() : null;
 }
 /** Fund NAV history is ~0.7 MB, so it is loaded only when a fund page needs it. */
 export async function loadHistory(){
