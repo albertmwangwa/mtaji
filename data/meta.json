@@ -2,38 +2,40 @@
   "sources": {
     "utt": {
       "ok": true,
-      "at": "2026-11-16T09:46:36Z",
-      "rows": 15944,
-      "asof": "2026-11-12"
+      "at": "2026-11-16T23:04:12Z",
+      "rows": 15950,
+      "asof": "2026-11-13"
     },
     "navview": {
       "ok": true,
-      "at": "2026-11-16T09:46:36Z",
+      "at": "2026-11-16T23:04:12Z",
       "funds": 28,
       "asof": "2026-11-14"
     },
     "dse": {
       "ok": true,
-      "at": "2026-11-16T11:16:43Z",
+      "at": "2026-11-16T23:06:27Z",
       "companies": 28,
       "of": 28,
-      "asof": "2026-11-13"
+      "asof": "2026-11-16"
     },
     "treasury": {
       "ok": true,
-      "at": "2026-11-16T09:50:07Z",
+      "at": "2026-11-16T23:07:54Z",
       "asof": "2026-11-11",
       "bill_auctions": 26,
       "bond_auctions": 36
     },
     "fx": {
       "ok": true,
-      "at": "2026-11-16T09:50:09Z",
-      "asof": "2026-11-16",
+      "at": "2026-11-16T23:07:56Z",
+      "asof": "2026-11-17",
       "currencies": 43
     }
   },
   "warnings": [
+    "tsl.imara: latest NAV is from 2026-11-06, more than 10 days old",
+    "tsl.keshotulivu: latest NAV is from 2026-11-06, more than 10 days old",
     "DSE KA: ignored a bad print of 10 on 2025-07-04 (it reversed within a few sessions)",
     "DSE KA: ignored a bad print of 180 on 2026-07-24 (it reversed within a few sessions)",
     "DSE USL: ignored a bad print of 10 on 2019-08-06 (it reversed within a few sessions)",
@@ -42,5 +44,5 @@
     "DSE USL: ignored a bad print of 10 on 2020-07-15 (it reversed within a few sessions)",
     "DSE USL: close moved from 5 to 25 on 2026-02-02; a split or data error? Add it to config/dse.json if it is a split."
   ],
-  "updated": "2026-11-16T11:16:43Z"
+  "updated": "2026-11-16T23:07:56Z"
 }
