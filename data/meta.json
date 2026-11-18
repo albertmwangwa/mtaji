@@ -2,35 +2,34 @@
   "sources": {
     "utt": {
       "ok": true,
-      "at": "2026-11-18T15:39:06Z",
+      "at": "2026-11-18T21:38:23Z",
       "rows": 15962,
       "asof": "2026-11-17"
     },
     "navview": {
       "ok": true,
-      "at": "2026-11-18T15:39:07Z",
+      "at": "2026-11-18T21:38:24Z",
       "funds": 28,
-      "asof": "2026-11-17"
+      "asof": "2026-11-18"
     },
     "dse": {
       "ok": true,
-      "at": "2026-11-18T15:41:13Z",
+      "at": "2026-11-18T21:40:24Z",
       "companies": 28,
       "of": 28,
       "asof": "2026-11-18"
     },
     "treasury": {
       "ok": true,
-      "at": "2026-11-18T15:42:33Z",
+      "at": "2026-11-18T21:41:43Z",
       "asof": "2026-11-18",
       "bill_auctions": 26,
       "bond_auctions": 36
     },
     "fx": {
-      "ok": true,
-      "at": "2026-11-18T15:42:35Z",
-      "asof": "2026-11-18",
-      "currencies": 43
+      "ok": false,
+      "at": "2026-11-18T21:41:47Z",
+      "error": "BoT: USD rate not found on the exchange rate page"
     }
   },
   "warnings": [
@@ -42,5 +41,5 @@
     "DSE USL: ignored a bad print of 10 on 2020-07-15 (it reversed within a few sessions)",
     "DSE USL: close moved from 5 to 25 on 2026-02-02; a split or data error? Add it to config/dse.json if it is a split."
   ],
-  "updated": "2026-11-18T15:42:35Z"
+  "updated": "2026-11-18T21:41:47Z"
 }
