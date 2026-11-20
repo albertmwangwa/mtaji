@@ -2,34 +2,34 @@
   "sources": {
     "utt": {
       "ok": true,
-      "at": "2026-11-20T15:25:38Z",
+      "at": "2026-11-20T21:34:41Z",
       "rows": 15974,
       "asof": "2026-11-19"
     },
     "navview": {
       "ok": true,
-      "at": "2026-11-20T15:25:38Z",
+      "at": "2026-11-20T21:34:41Z",
       "funds": 28,
       "asof": "2026-11-19"
     },
     "dse": {
       "ok": true,
-      "at": "2026-11-20T15:27:45Z",
+      "at": "2026-11-20T21:36:38Z",
       "companies": 28,
       "of": 28,
       "asof": "2026-11-20"
     },
     "treasury": {
       "ok": true,
-      "at": "2026-11-20T15:29:04Z",
+      "at": "2026-11-20T21:37:58Z",
       "asof": "2026-11-18",
       "bill_auctions": 26,
       "bond_auctions": 36
     },
     "fx": {
       "ok": true,
-      "at": "2026-11-20T15:29:07Z",
-      "asof": "2026-11-20",
+      "at": "2026-11-20T21:38:00Z",
+      "asof": "2026-11-21",
       "currencies": 43
     }
   },
@@ -42,5 +42,5 @@
     "DSE USL: ignored a bad print of 10 on 2020-07-15 (it reversed within a few sessions)",
     "DSE USL: close moved from 5 to 25 on 2026-02-02; a split or data error? Add it to config/dse.json if it is a split."
   ],
-  "updated": "2026-11-20T15:29:07Z"
+  "updated": "2026-11-20T21:38:00Z"
 }
