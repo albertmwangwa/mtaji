@@ -41,11 +41,12 @@ jobs:
             python -m pipeline || echo "::warning::Some sources failed, see data/meta.json"
           fi
       - name: Commit changed data
+        # rebase onto anything pushed while this run was working (keeping this run's data if the same file changed)
         run: |
           git config user.name "mtaji-data-bot"
           git config user.email "actions@users.noreply.github.com"
           git add data legacy
-          if git diff --cached --quiet; then echo "No data changes"; else git commit -m "data: ${{ github.event.schedule == '*/20 6-13 * * 1-5' && 'live' || 'refresh' }} $(date -u +%Y-%m-%dT%H:%MZ)" && git push; fi
+          if git diff --cached --quiet; then echo "No data changes"; else git commit -m "data: ${{ github.event.schedule == '*/20 6-13 * * 1-5' && 'live' || 'refresh' }} $(date -u +%Y-%m-%dT%H:%MZ)" && git pull --rebase -X theirs origin "${{ github.ref_name }}" && git push; fi
 
   deploy:
     needs: refresh
