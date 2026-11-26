@@ -104,7 +104,7 @@ pipeline/               Python 3.10+, standard library only
   sources/              utt.py, navview.py, dse.py, bot.py
   build.py              returns, split adjustment, bad-print filter, dividends, liquidity
   config/               facts the sources don't publish: fund type, fee, minimum, payouts; DSE tickers and splits
-legacy/                 the original single-file calculator (served at /legacy/)
+legacy/                 the original single-file calculator (served at /legacy/); its figures are rewritten from data/ by pipeline/legacy.py after every full refresh
 docs/screenshots/       images used in this README
 ```
 

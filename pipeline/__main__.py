@@ -158,6 +158,11 @@ def main(argv: list[str]) -> int:
             except Exception:
                 traceback.print_exc()
                 meta["sources"][name] = {"ok": False, "at": now_iso(), "error": traceback.format_exc(limit=1)}
+    try:   # keep the classic single-file calculator's own copies of the figures in step
+        from . import legacy
+        meta["warnings"] += legacy.update(log=log)
+    except Exception as e:
+        meta["warnings"].append(f"classic calculator not updated: {e}")
     meta["updated"] = now_iso()
     write_json(DATA / "meta.json", meta, compact=False)
     for w in meta["warnings"]:
