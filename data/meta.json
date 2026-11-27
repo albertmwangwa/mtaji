@@ -2,37 +2,39 @@
   "sources": {
     "utt": {
       "ok": true,
-      "at": "2026-11-26T01:49:31Z",
-      "rows": 15992,
-      "asof": "2026-11-24"
+      "at": "2026-11-26T22:38:46Z",
+      "rows": 15998,
+      "asof": "2026-11-25"
     },
     "navview": {
       "ok": true,
-      "at": "2026-11-26T01:49:32Z",
+      "at": "2026-11-26T22:38:46Z",
       "funds": 28,
       "asof": "2026-11-25"
     },
     "dse": {
       "ok": false,
-      "at": "2026-11-26T03:20:57Z",
+      "at": "2026-11-27T00:11:48Z",
       "error": "no company pages could be read"
     },
     "treasury": {
       "ok": true,
-      "at": "2026-11-26T03:22:21Z",
+      "at": "2026-11-27T00:13:25Z",
       "asof": "2026-11-25",
       "bill_auctions": 26,
       "bond_auctions": 36
     },
     "fx": {
       "ok": true,
-      "at": "2026-11-26T03:22:23Z",
-      "asof": "2026-11-26",
+      "at": "2026-11-27T00:13:28Z",
+      "asof": "2026-11-27",
       "currencies": 43
     }
   },
   "warnings": [
-    "DSE market watch: GET https://www.dse.co.tz/en/all-equities failed after 3 tries: <urlopen error timed out>"
+    "DSE market watch: GET https://www.dse.co.tz/en/all-equities failed after 3 tries: <urlopen error timed out>",
+    "classic calculator: could not update period note",
+    "classic calculator: could not update data note DSE"
   ],
-  "updated": "2026-11-26T03:22:23Z"
+  "updated": "2026-11-27T00:13:28Z"
 }
