@@ -2,39 +2,47 @@
   "sources": {
     "utt": {
       "ok": true,
-      "at": "2026-11-26T22:38:46Z",
-      "rows": 15998,
-      "asof": "2026-11-25"
+      "at": "2026-11-27T16:38:50Z",
+      "rows": 16004,
+      "asof": "2026-11-26"
     },
     "navview": {
       "ok": true,
-      "at": "2026-11-26T22:38:46Z",
+      "at": "2026-11-27T16:38:51Z",
       "funds": 28,
-      "asof": "2026-11-25"
+      "asof": "2026-11-26"
     },
     "dse": {
-      "ok": false,
-      "at": "2026-11-27T00:11:48Z",
-      "error": "no company pages could be read"
+      "ok": true,
+      "at": "2026-11-27T16:40:48Z",
+      "companies": 28,
+      "of": 28,
+      "asof": "2026-11-27"
     },
     "treasury": {
       "ok": true,
-      "at": "2026-11-27T00:13:25Z",
+      "at": "2026-11-27T16:42:33Z",
       "asof": "2026-11-25",
       "bill_auctions": 26,
       "bond_auctions": 36
     },
     "fx": {
       "ok": true,
-      "at": "2026-11-27T00:13:28Z",
+      "at": "2026-11-27T16:42:35Z",
       "asof": "2026-11-27",
       "currencies": 43
     }
   },
   "warnings": [
-    "DSE market watch: GET https://www.dse.co.tz/en/all-equities failed after 3 tries: <urlopen error timed out>",
+    "DSE KA: ignored a bad print of 10 on 2025-07-04 (it reversed within a few sessions)",
+    "DSE KA: ignored a bad print of 180 on 2026-07-24 (it reversed within a few sessions)",
+    "DSE USL: ignored a bad print of 10 on 2019-08-06 (it reversed within a few sessions)",
+    "DSE USL: ignored a bad print of 10 on 2019-11-13 (it reversed within a few sessions)",
+    "DSE USL: ignored a bad print of 10 on 2019-11-14 (it reversed within a few sessions)",
+    "DSE USL: ignored a bad print of 10 on 2020-07-15 (it reversed within a few sessions)",
+    "DSE USL: close moved from 5 to 25 on 2026-02-02; a split or data error? Add it to config/dse.json if it is a split.",
     "classic calculator: could not update period note",
     "classic calculator: could not update data note DSE"
   ],
-  "updated": "2026-11-27T00:13:28Z"
+  "updated": "2026-11-27T16:42:35Z"
 }
