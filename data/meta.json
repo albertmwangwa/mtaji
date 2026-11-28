@@ -2,33 +2,33 @@
   "sources": {
     "utt": {
       "ok": true,
-      "at": "2026-11-27T22:23:10Z",
+      "at": "2026-11-28T15:29:35Z",
       "rows": 16004,
       "asof": "2026-11-26"
     },
     "navview": {
       "ok": true,
-      "at": "2026-11-27T22:23:10Z",
+      "at": "2026-11-28T15:29:35Z",
       "funds": 28,
-      "asof": "2026-11-26"
+      "asof": "2026-11-27"
     },
     "dse": {
       "ok": true,
-      "at": "2026-11-27T22:25:02Z",
+      "at": "2026-11-28T15:31:27Z",
       "companies": 28,
       "of": 28,
       "asof": "2026-11-27"
     },
     "treasury": {
       "ok": true,
-      "at": "2026-11-27T22:26:29Z",
+      "at": "2026-11-28T15:33:56Z",
       "asof": "2026-11-25",
       "bill_auctions": 26,
       "bond_auctions": 36
     },
     "fx": {
       "ok": true,
-      "at": "2026-11-27T22:26:31Z",
+      "at": "2026-11-28T15:33:58Z",
       "asof": "2026-11-28",
       "currencies": 43
     }
@@ -44,5 +44,5 @@
     "classic calculator: could not update period note",
     "classic calculator: could not update data note DSE"
   ],
-  "updated": "2026-11-27T22:26:31Z"
+  "updated": "2026-11-28T15:33:58Z"
 }
